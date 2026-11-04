@@ -47,3 +47,7 @@ When a skill moves here from `~/.claude/skills/`, delete the old copy so only on
 
 - No employer names, client data, credentials or personal contact details in any skill.
 - Skills from others: install first, copy last (see `vendor/README.md`), licence checked.
+
+## Licence
+
+MIT, see `LICENSE`. Vendored skills keep their own licence (see `vendor/README.md`).
