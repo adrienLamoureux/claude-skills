@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en" data-ar-palette="{{PALETTE}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<meta name="description" content="{{SUMMARY}}">
+<meta name="generator" content="archon-document">
+<style>
+{{CSS}}
+</style>
+{{HEAD_SCRIPTS}}
+<script>
+{{JS}}
+</script>
+</head>
+<body>
+<div class="ar-page">
+  <aside class="ar-toc" aria-label="Contents">
+    {{TOC_HOME}}
+    <p class="ar-label">Contents</p>
+    {{TOC}}
+  </aside>
+  <main class="ar-main">
+    <header class="ar-header">
+      <div class="ar-header-top">
+        <span class="ar-eyebrow">{{CRUMB}}{{DOC_TYPE}}</span>
+        <button class="ar-theme-btn" type="button" data-ar-theme-toggle aria-label="Cycle colour theme">Auto</button>
+      </div>
+      <h1>{{TITLE}}</h1>
+      <p class="ar-summary">{{SUMMARY}}</p>
+      <div class="ar-meta">{{CHIPS}}</div>
+    </header>
+    <details class="ar-toc-mobile">
+      <summary>Contents</summary>
+      {{TOC}}
+    </details>
+<!--ar:body-->
+{{BODY}}
+<!--ar:/body-->
+    {{PAGER}}
+    <footer class="ar-footer">{{FOOTER}}</footer>
+  </main>
+</div>
+<script type="application/json" id="ar-meta">{{META_JSON}}</script>
+</body>
+</html>

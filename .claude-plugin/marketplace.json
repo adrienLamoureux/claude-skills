@@ -1,0 +1,27 @@
+{
+  "name": "adrien-skills",
+  "owner": {
+    "name": "Adrien Lamoureux"
+  },
+  "metadata": {
+    "description": "Adrien's Claude Code skills: engineering docs, model routing and résumé tailoring.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "docs-kit",
+      "source": "./plugins/docs-kit",
+      "description": "Archon twin docs: one fact base rendered as an HTML page for engineers and a Markdown file for coding agents."
+    },
+    {
+      "name": "dev-kit",
+      "source": "./plugins/dev-kit",
+      "description": "Engineering workflow helpers, starting with Claude model-tier routing."
+    },
+    {
+      "name": "career-kit",
+      "source": "./plugins/career-kit",
+      "description": "Truthful, job-tailored résumés for a resume-forge checkout."
+    }
+  ]
+}
