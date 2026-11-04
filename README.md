@@ -11,7 +11,8 @@ claude-skills/
 │  └─ career-kit/   skills/tailor-resume     truthful job-tailored résumés (resume-forge)
 ├─ template/my-skill/SKILL.md        start a new skill from here
 ├─ vendor/                           skills copied from others (see vendor/README.md)
-└─ scripts/validate.sh               `claude plugin validate` on everything
+├─ scripts/validate.sh               `claude plugin validate` on everything
+└─ ROADMAP.md                        planned work (next: sdlc-kit)
 ```
 
 A plugin is the unit you install; a skill is what you invoke. Plugin skills carry the plugin
