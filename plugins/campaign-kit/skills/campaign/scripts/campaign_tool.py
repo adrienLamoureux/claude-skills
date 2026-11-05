@@ -21,7 +21,8 @@ Every machine-read block is a fenced ```json <kind>-manifest``` inside a Markdow
 The final report is outcome.md. Runs started before campaign-kit 0.2.0 wrote report.md, which
 is still accepted. Claude Code refuses a subagent's Write to any .md file whose name starts with
 report, summary, findings or analysis, so no file the agents write may be named that way, and
-lane ids (a lane writes rounds/<n>/<lane>.md) may not start with those words either.
+lane ids (a lane writes rounds/<n>/<lane>.md) may not start with those words either. The
+closing résumé, recap.md, is written by the orchestrator when `next` says done.
 """
 from __future__ import annotations
 
@@ -43,6 +44,7 @@ BLOCKED_HINT = ("must not start with report, summary, findings or analysis: Clau
                 "subagent writes to such .md files")
 OUTCOME = "outcome.md"
 LEGACY_OUTCOME = "report.md"
+RECAP = "recap.md"
 
 
 # ---------------------------------------------------------------- IO
@@ -277,7 +279,8 @@ def cmd_next(root: Path) -> int:
     if final is None:
         return emit({"step": "report", "round": n, "final": verdict, "judge_effort": "xhigh",
                      "write": str(root / OUTCOME)})
-    return emit({"step": "done", "round": n, "final": verdict, "outcome": str(final)})
+    return emit({"step": "done", "round": n, "final": verdict, "outcome": str(final),
+                 "recap": str(root / RECAP), "recap_written": (root / RECAP).exists()})
 
 
 # ---------------------------------------------------------------- approve / status

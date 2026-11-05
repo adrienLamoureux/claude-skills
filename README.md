@@ -33,7 +33,7 @@ session's context stays small.
 | Steps | `plan` → `implement` → `review` (+ `investigate` for bugs) | `interview` → `execute` lanes → `review` and iterate (`campaign` runs the loop) |
 | Human gates | approve the plan; act on the review | approve the brief; pivots and blockers (configurable) |
 | Run folder | `.dev-kit/<slug>/` (or any `DIR=`, inside or outside the repo) | `.campaign-kit/<slug>/` |
-| Ends with | `review.md`: the verdict | `outcome.md`: each criterion baseline → final |
+| Ends with | `review.md` (the verdict) and `recap.md`, a résumé of at most 8 lines | `outcome.md` (the final report) and `recap.md`, a résumé of at most 8 lines |
 | Branch | `implement` creates `dev-kit/<slug>` when on the default branch; never pushes | runners never switch branches unless the brief allows it |
 
 ### Model and effort routing

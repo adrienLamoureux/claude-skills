@@ -36,19 +36,24 @@ so routine rounds stay cheap.
 2. **Judge.** Launch `campaign-kit:campaign-judge` with: `DIR`, round `n`, rounds left
    (`max_rounds - n`), `FORMATS`, the check command `TOOL check <DIR>`, and final mode if
    asked or routed.
-3. **Relay** in at most 10 lines: verdict and reason; each criterion `baseline → now → target`
+3. **Relay** (skip on a stop verdict or in final mode: step 5's recap replaces it) in at most
+   10 lines: verdict and reason; each criterion `baseline → now → target`
    (`TOOL status <DIR>` gives the table cheaply); next round's actions, or the stop reason;
    anything the user must decide or do.
 4. **Checkpoint.** `TOOL next <DIR>` again:
    - `approve-round` with `needs_user: true` (a pivot, or autonomy `checkpoint-each-round`) →
      ask the user to approve the next round; on yes, `TOOL approve <DIR> round <n>`.
    - `approve-round` with `needs_user: false` → approve it and say so.
-   - `done` with `final: stop-blocked` → put each `needs_user` item from the review manifest to
-     the user, one question each. Once resolved, the campaign continues with a new round plan
-     (judge) or a brief change (interview).
-   - `done` otherwise → show the `## Outcome` lines of the file in the tool's `outcome`
-     (`outcome.md`; `report.md` in older runs); offer to publish a status page if the
-     project-artifact plugin is installed.
+   - `done` → step 5 first. Then, with `final: stop-blocked`, put each `needs_user` item from
+     the review manifest to the user, one question each; once resolved, the campaign
+     continues with a new round plan (judge) or a brief change (interview). Otherwise offer
+     to publish a status page if the project-artifact plugin is installed.
+5. **Recap.** The judge's reply ends with a recap block (`## recap.md` in `FORMATS`, at most
+   eight lines). Check its criteria line against `TOOL status <DIR>` and its delivered paths
+   against the `outcome` file (`outcome.md`; `report.md` in older runs), and correct anything
+   that disagrees. If the reply has no block, build it from those two. Write it yourself, not
+   through an agent, to the tool's `recap` path (`<DIR>/recap.md`, replacing an older one),
+   and show it as is.
 
 ## Rules
 

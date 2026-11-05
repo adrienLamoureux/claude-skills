@@ -34,14 +34,36 @@ Do not pass `model`. Pass `effort` as above unless the user gave `effort=`.
    produces confident wrong verdicts.
 3. **Judge.** Launch `dev-kit:dev-reviewer` with: the plan path, `DIR`, the base commit, the
    ownership command, and `<DIR>/review.md` as its output path.
-4. **Relay** in at most 12 lines: the verdict, each must-fix finding as one line with
-   `path:line` and its slice, then should-fix count and residual risks.
+4. **Recap.** The reviewer's reply ends with a recap block (format below). Check it against
+   `TOOL check` (slices), `<DIR>/checks/integration.md` (gates) and the ownership command's
+   `by_slice` (files changed), and correct anything that disagrees; if the reply has no block,
+   build it from those and `review.md`. Write it yourself, not through an agent, to
+   `<DIR>/recap.md` (each review cycle replaces it), and show it as your relay, plus one line
+   with the should-fix count and residual risks if there are any.
 5. **Route:**
    - `approve` → done. Offer to commit (the user decides; `/commit` from commit-commands works
      well) and mention the run folder can be deleted.
    - `changes-required` → offer `/dev-kit:implement <slug> fix`, then review again. After two
      such cycles, stop and let the user decide.
    - `blocked` → the plan is wrong; offer `/dev-kit:plan` with review.md as input.
+
+## Recap format
+
+A brief résumé of at most eight lines after the heading: ticket and size with the verdict;
+slices done and gates passed or failed (name the failing ones); files changed (count, then the
+first few paths); each must-fix finding as `path:line`, what is wrong, and its slice (more than
+three → the top three and "N more in review.md"; none → drop the line); the next step, which
+is commit on `approve`, `/dev-kit:implement <slug> fix` on `changes-required`, or
+`/dev-kit:plan` on `blocked`.
+
+```markdown
+# Recap — login-rate-limit
+- Ticket: Per-user rate limit on POST /login (M) · verdict: changes-required
+- Slices: 3 of 3 done · gates: 4 passed, 1 failed (`npm --prefix backend test -- auth`)
+- Changed: 6 files: backend/lib/rate-limit.js, backend/routes/auth.js, web/src/Login.tsx, …
+- Must fix: `backend/routes/auth.js:41` limiter keyed by IP, not user id (backend-route)
+- Next: `/dev-kit:implement login-rate-limit fix`, then `/dev-kit:review login-rate-limit`
+```
 
 ## Rules
 

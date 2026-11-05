@@ -8,7 +8,7 @@ independent judge reviews the result against it.
 /dev-kit:plan <ticket>        scout (Sonnet) → planner (Opus) → plan.md → you approve
 /dev-kit:implement <slug>     working branch → waves of implementers (Sonnet) → checker (Sonnet) per wave
                               → integration gates
-/dev-kit:review <slug>        fresh gates (Sonnet) → reviewer (Opus) → approve | changes-required | blocked
+/dev-kit:review <slug>        fresh gates (Sonnet) → reviewer (Opus) → approve | changes-required | blocked → recap.md
                               changes-required → /dev-kit:implement <slug> fix → review again
 
 /dev-kit:investigate <bug>    read-only: reproduce, 3 ranked hypotheses, smallest experiment
@@ -54,6 +54,7 @@ which may also be outside the repository (a CI artifacts folder, say):
 | `slices/<id>.md` | implementers |
 | `checks/wave-<n>.md`, `checks/integration.md` | checker |
 | `review.md` | reviewer |
+| `recap.md` | the main session, from the reviewer's closing recap: a brief résumé of at most 8 lines (ticket and verdict, slices and gates, files changed, must-fix items, next step) |
 | `investigation.md` | investigator |
 
 Claude Code refuses a sub-agent's Write to a `.md` file whose name starts with `report`,

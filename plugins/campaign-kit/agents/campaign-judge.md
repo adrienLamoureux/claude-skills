@@ -53,4 +53,9 @@ Write:
 Run the check command before replying and fix every error it reports.
 
 Reply with at most 120 words: verdict, criteria values, the next round's actions or the stop
-reason, and anything the user must decide. Your reply is all the orchestrator sees.
+reason, and anything the user must decide. On a stop verdict or in final mode, end the reply
+with the recap block exactly as the formats reference shows under `## recap.md` (heading plus
+at most eight lines, not counted in the 120 words), ready to save as is: outcome and rounds
+used, each criterion baseline → final, deliverables as paths, measured cost if any, top open
+items, the user's to-dos. Do not write `recap.md`; the orchestrator saves it. Your reply is all
+the orchestrator sees.
