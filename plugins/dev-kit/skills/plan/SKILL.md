@@ -66,4 +66,4 @@ sets it. Pass `effort` exactly as this table says for the ticket size.
 - `references/plan-format.md` — the plan.md sections, the `json plan-manifest` block, sizing.
   The planner reads it; you need it only to size the ticket.
 - `scripts/plan_tool.py` — `check` (structure, manifest, path overlap between parallel slices,
-  waves), `approve`, and `ownership` (used by implement and review).
+  waves), `approve`, and `branch`, `baseline` and `ownership` (used by implement and review).

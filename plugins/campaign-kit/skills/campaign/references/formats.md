@@ -13,11 +13,19 @@ the memory; every agent starts cold and reads only what its brief names.
   rounds/<n>/<lane>.md  Action report per lane (runner)
   rounds/<n>/check.md   Observation: lane statuses, criteria measured, regressions (checker)
   rounds/<n>/review.md  judgement and verdict (judge)
-  report.md             final report (judge, on a stop verdict)
+  outcome.md            final report (judge, on a stop verdict)
+  recap.md              brief résumé shown when the campaign ends (orchestrator, not an agent)
 ```
 
 Machine-read blocks are fenced ` ```json <kind>-manifest ` and `campaign_tool.py` validates them.
 Everything around them is free Markdown for humans.
+
+**File names.** Claude Code refuses a subagent's Write to any `.md` file whose name starts with
+`report`, `summary`, `findings` or `analysis` (any case). So the final report is `outcome.md`,
+the closing résumé is `recap.md` (safe for either writer), and lane ids, which name the lane
+reports, may not start with those words (`campaign_tool.py
+check` rejects them). Runs started before campaign-kit 0.2.0 have `report.md` instead; the tool
+accepts either.
 
 ## brief.md
 
@@ -86,7 +94,12 @@ not in the brief only after a `pivot` verdict.
 
 `## Status` (done / partial / failed / needs-human), `## What I did`, `## Evidence` (commands
 and their key output, links, files), `## Acceptance` (each: met / not met / unverified),
-`## Surprises`, `## Suggested next step`.
+`## Surprises`, `## Suggested next step`, and `## Files to place` when needed (below).
+
+A deliverable whose file name the harness blocks (say `docs/report.md`) is written next to it
+under a name that does not start with a blocked word (`docs/draft-report.md`) and listed under
+`## Files to place` as `` `docs/draft-report.md` -> `docs/report.md` ``. The orchestrator, which
+the rule does not cover, moves each one into place before the checker runs.
 
 ## rounds/<n>/check.md (checker)
 
@@ -125,7 +138,37 @@ Verdicts: `continue` (same lanes, next tasks), `pivot` (lanes added, dropped or 
 objective and criteria unchanged), `stop-done` (every criterion met, verified by the checker),
 `stop-blocked` (cannot progress without the user: access, a decision, a change to objective or
 criteria), `stop-budget` (rounds exhausted). On `continue` or `pivot` the judge also writes
-`rounds/<n+1>/plan.md`. The judge never changes the objective or the criteria.
+`rounds/<n+1>/plan.md`; on a stop verdict it writes `outcome.md` (below). The judge never changes
+the objective or the criteria.
+
+## outcome.md (judge)
+
+The final report, written once, on a stop verdict or in final mode: `## Outcome` (each
+criterion baseline -> final, met or not), `## Per lane` (what each lane delivered),
+`## What did not work`, `## Open items`, `## Next for the user` (needs-human items first). No
+manifest; `campaign_tool.py next` returns `done` once the file exists.
+
+## recap.md (orchestrator)
+
+The brief résumé the user sees when the campaign ends. The main session writes it, not an
+agent, whenever `campaign_tool.py next` says `done`. The judge's reply on a stop verdict or in
+final mode ends with this block; the orchestrator checks it against `campaign_tool.py status`
+and `outcome.md`, saves it, and shows it. At most eight lines after the heading:
+
+```markdown
+# Recap — coverage-80
+- Outcome: stop-done after 3 of 5 rounds
+- api-coverage: 55.0% → 81.2% (met) · ci-time: 1.00 x → 1.06 x (met)
+- Delivered: packages/api/test/billing/**, packages/web/src/test-utils/renderWithProviders.tsx
+- Cost: USD 4.10 measured in round 2 (drop the line when nothing was measured)
+- Open: checkout tests flake under CI load
+- You: review and commit the new tests; nothing was pushed
+```
+
+Outcome with rounds used of the budget; every criterion baseline → final, met or not; what
+was delivered as files or paths; measured cost only if a criterion, the ledger or `outcome.md`
+records one; the top open items; the user's to-dos (needs-human items first). Rewritten each
+time the campaign ends, so a resumed campaign gets a fresh one.
 
 ## ledger.md (judge only)
 

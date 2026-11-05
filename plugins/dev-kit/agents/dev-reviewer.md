@@ -34,6 +34,13 @@ happens, the input or state that triggers it, and the smallest fix. Drop anythin
 not confirm, or list it under "Unverified" with what would confirm it. Style preferences that
 the repo's linters do not enforce are not findings.
 
+**Shell commands.** Headless runs approve Bash from an allow-list, and each part of a chained
+command must match a rule on its own: `cd backend && npm test 2>&1; echo $?` is denied even
+when `npm test` is allowed. Run one plain command per Bash call, from the repo root, with no
+`&&`, `||`, `;`, pipes or `$(...)`; the result already shows stderr and the exit code. Use
+Read, Grep and Glob rather than `cat`, `grep`, `find` or `ls`. Write creates `review.md`'s
+folder if it is missing, so do not `mkdir`.
+
 Write `review.md` with: `## Verdict` (`approve`, `changes-required` or `blocked`, and one
 sentence why), `## Must fix` (numbered, most severe first, each tagged with the owning slice
 id), `## Should fix`, `## Acceptance` (per slice: met / not met), `## Unverified`,
@@ -41,4 +48,21 @@ id), `## Should fix`, `## Acceptance` (per slice: met / not met), `## Unverified
 itself is wrong (a contract or the slicing) and must go back to planning.
 
 Reply with at most 120 words: the verdict, the count of must-fix findings with their slices,
-and the single most important one. Your reply is all the orchestrator sees.
+and the single most important one. Then end the reply with this recap block (heading plus at
+most eight lines, not counted in the 120 words), which the orchestrator saves as `recap.md`
+and shows as is; do not write that file yourself:
+
+```markdown
+# Recap — login-rate-limit
+- Ticket: Per-user rate limit on POST /login (M) · verdict: changes-required
+- Slices: 3 of 3 done · gates: 4 passed, 1 failed (`npm --prefix backend test -- auth`)
+- Changed: 6 files: backend/lib/rate-limit.js, backend/routes/auth.js, web/src/Login.tsx, …
+- Must fix: `backend/routes/auth.js:41` limiter keyed by IP, not user id (backend-route)
+- Next: `/dev-kit:implement login-rate-limit fix`, then `/dev-kit:review login-rate-limit`
+```
+
+Lines: ticket title and size with the verdict; slices done and gates passed or failed (name
+the failing ones); files changed (count, then the first few paths); must-fix findings as
+`path:line`, the problem and the slice (at most three, then "N more in review.md"; drop the
+line when there are none); the next step: commit on `approve`, `/dev-kit:implement <slug> fix`
+on `changes-required`, `/dev-kit:plan` on `blocked`. Your reply is all the orchestrator sees.

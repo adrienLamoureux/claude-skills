@@ -38,7 +38,7 @@ argument is a new objective. Then repeat:
 | `approve-round`, `execute`, `check` | follow the **execute** skill (`<skill-dir>/../execute/SKILL.md`) |
 | `review`, `report`, `plan-round` | follow the **review** skill (`<skill-dir>/../review/SKILL.md`), including its checkpoint |
 | `fix-round`, `fix-check`, `fix-review` | send the tool's `errors` to the agent that wrote the file (judge for plans and reviews, checker for checks) and ask it to fix them |
-| `done` | final summary (below) and stop |
+| `done` | final recap (below) and stop |
 
 2. After each review, give the user a two-line progress note (verdict; criteria now vs
    target), then go on unless a checkpoint needs them.
@@ -48,12 +48,22 @@ argument is a new objective. Then repeat:
 Read each sub-skill file once per session, when its step first comes up; you do not need to
 re-read it every round.
 
-## Final summary
+## Final recap
 
-From `report.md` and `TOOL status <DIR>`: each criterion `baseline → final` (met or not), rounds
-used of the budget, what each lane delivered, open items and the user's to-dos. If the
-project-artifact plugin is installed, offer a shareable status page. Do not commit anything; the
-user decides what of the work to keep.
+Every campaign ends with a brief résumé of at most eight lines, in the format of `## recap.md`
+in `references/formats.md`: outcome and rounds used of the budget, each criterion baseline →
+final (met or not), what was delivered as files or paths, measured cost if any, the top open
+items, and the user's to-dos.
+
+- When the loop reached `done` through the review skill, its step 5 has already written
+  `<DIR>/recap.md` and shown it: stop there.
+- When the loop starts at `done` (a finished campaign, resumed): show `recap.md` if
+  `recap_written` is true. Otherwise build it from the `outcome` file that `TOOL next` names
+  (`outcome.md`, or `report.md` in a run started before campaign-kit 0.2.0) and
+  `TOOL status <DIR>`, write it yourself to the tool's `recap` path, and show it.
+
+If the project-artifact plugin is installed, offer a shareable status page. Do not commit
+anything; the user decides what of the work to keep.
 
 ## Rules
 

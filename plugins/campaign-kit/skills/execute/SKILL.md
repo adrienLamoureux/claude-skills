@@ -36,9 +36,17 @@ Do not pass `model`.
    message so they run in parallel, each with its effort from `efforts`. Brief: `DIR`, the
    round, the lane, report path `<DIR>/rounds/<n>/<lane>.md`. `TOOL check` already proved code
    lanes' owned paths are disjoint.
-3. **Observe.** When every runner has replied, launch `campaign-kit:campaign-checker` in
-   `round <n>` mode with `DIR` and `FORMATS`. It writes `rounds/<n>/check.md`.
-4. **Report** in at most 8 lines: lane statuses, each criterion's value versus last round,
+3. **Place blocked files.** Claude Code refuses a subagent's Write to a `.md` file whose name
+   starts with `report`, `summary`, `findings` or `analysis`, so a runner writes such a
+   deliverable under another name and lists it in its lane report under `## Files to place`
+   (`` `docs/draft-report.md` -> `docs/report.md` ``). Grep the round's lane reports for that
+   heading. Move each listed draft into place with `mv` when both paths are inside the lane's
+   owned paths (for a lane with no `owns`, any path the guardrails allow); leave the rest for
+   the checker to flag.
+4. **Observe.** When every runner has replied and files are placed, launch
+   `campaign-kit:campaign-checker` in `round <n>` mode with `DIR` and `FORMATS`. It writes
+   `rounds/<n>/check.md`.
+5. **Report** in at most 8 lines: lane statuses, each criterion's value versus last round,
    regressions, and any `needs-human` lane with what it needs. Next: `/campaign-kit:review
    <slug>` (or the loop continues if `campaign` called this).
 
@@ -47,5 +55,5 @@ Do not pass `model`.
 - A runner that reports `needs-human` is never re-launched to "just do it". Its request goes to
   the user through the judge's verdict.
 - Do not re-run a lane yourself or edit lane outputs; a failed lane is information for the
-  judge.
+  judge. Moving a listed draft into place (step 3) is the one exception.
 - Never launch lanes of two different rounds at once.

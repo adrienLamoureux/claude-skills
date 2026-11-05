@@ -1,7 +1,7 @@
 ---
 name: implement
 description: Execute an approved dev-kit plan.md — Sonnet workers implement its slices wave by wave inside their owned paths, a Sonnet checker runs gates, ownership and contract-drift checks after each wave and at integration — then hand off to review. Also applies the must-fix findings of a dev-kit review.md. Use when the user runs /dev-kit:implement, or says to implement, build, execute or carry out a dev-kit plan, or to fix what the dev-kit review found.
-argument-hint: "<slug | plan.md path> [MAX_PARALLEL=3] [fix]"
+argument-hint: "<slug | plan.md path> [MAX_PARALLEL=3] [branch=<name>] [fix]"
 ---
 
 # Implement
@@ -27,13 +27,17 @@ Launch with the Agent tool. Do not pass `model`. Pass `effort` as stated.
 1. **Load.** Resolve the run folder `DIR` from the slug (`.dev-kit/<slug>/`) or the plan path.
    Run `TOOL check <DIR>/plan.md`. Errors → stop and send the user to `/dev-kit:plan`.
    `approved: false` → show the plan summary and ask for approval first; on yes, `TOOL approve`.
-2. **Preflight.**
-   - On the default branch, create a working branch first (`git switch -c <slug>`), unless
-     the user said to stay.
+2. **Preflight**, before the first wave, every run (including headless and fix runs):
+   - **Branch.** Run `TOOL branch <DIR>/plan.md` (add `--name <name>` when the user gave
+     `branch=<name>`). On the default branch or a detached HEAD it creates and switches to
+     `dev-kit/<slug>`, or switches to it if it exists; on any other branch it stays. Skip it
+     only when the user said in words to stay on the current branch. `ok: false` → stop and
+     show the user its errors. Say the branch in one line. It never pushes, and neither do you.
    - `TOOL baseline <DIR>/plan.md <DIR>` records the base commit and the files already dirty,
      on the first run only, so pre-existing edits are never blamed on a slice. If it reports
      `dirty_under_owned_paths`, ask the user before going on: a worker would overwrite those
-     edits.
+     edits. The run folder may live outside the repository; run `TOOL` from the repository
+     root either way.
    - `OWN` below means `TOOL ownership <DIR>/plan.md --baseline <DIR>/baseline-dirty.txt
      --ignore <DIR>/`.
 3. **Waves.** For each wave from `check`, in order, in batches of at most `MAX_PARALLEL`
@@ -65,6 +69,7 @@ the same plan, stop and hand the decision to the user.
 - You do not edit source files yourself; workers do. If you catch yourself reading source to
   debug a failure, launch a worker or the checker with the question instead.
 - Never commit, push or open a PR here. When review approves, the user decides (they may use
-  `/commit`).
+  `/commit`). Creating the local working branch in step 2 is the only version-control change
+  this skill makes.
 - Parallel workers share one working tree. That is safe only because `check` proved their
   `owns` are disjoint; never launch two slices of different waves at once.

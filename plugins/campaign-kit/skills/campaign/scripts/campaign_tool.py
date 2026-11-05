@@ -17,6 +17,12 @@
       Criteria values per round and the last verdict, for a compact progress report.
 
 Every machine-read block is a fenced ```json <kind>-manifest``` inside a Markdown file.
+
+The final report is outcome.md. Runs started before campaign-kit 0.2.0 wrote report.md, which
+is still accepted. Claude Code refuses a subagent's Write to any .md file whose name starts with
+report, summary, findings or analysis, so no file the agents write may be named that way, and
+lane ids (a lane writes rounds/<n>/<lane>.md) may not start with those words either. The
+closing résumé, recap.md, is written by the orchestrator when `next` says done.
 """
 from __future__ import annotations
 
@@ -32,6 +38,13 @@ VERDICTS = {"continue", "pivot", "stop-done", "stop-blocked", "stop-budget"}
 LANE_STATUS = {"pass", "partial", "fail", "needs-human"}
 KEBAB = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 WILDCARDS = "*?["
+# Claude Code blocks a subagent's Write to `^(REPORT|SUMMARY|FINDINGS|ANALYSIS).*\.md$` (any case).
+BLOCKED_NAME = re.compile(r"^(report|summary|findings|analysis)", re.I)
+BLOCKED_HINT = ("must not start with report, summary, findings or analysis: Claude Code blocks "
+                "subagent writes to such .md files")
+OUTCOME = "outcome.md"
+LEGACY_OUTCOME = "report.md"
+RECAP = "recap.md"
 
 
 # ---------------------------------------------------------------- IO
@@ -57,6 +70,14 @@ def write(path: Path, kind: str, manifest: dict) -> None:
     text = path.read_text(encoding="utf-8")
     path.write_text(fence(kind).sub(lambda _: f"```json {kind}-manifest\n{body}\n```", text, 1),
                     encoding="utf-8")
+
+
+def outcome(root: Path) -> Path | None:
+    """The final report, or None. outcome.md wins; report.md is from runs before 0.2.0."""
+    for name in (OUTCOME, LEGACY_OUTCOME):
+        if (root / name).exists():
+            return root / name
+    return None
 
 
 def rounds(root: Path) -> list[int]:
@@ -109,6 +130,8 @@ def check_brief(brief: dict) -> list[str]:
         lid = lane.get("id", "?")
         if not KEBAB.match(str(lid)):
             errors.append(f"brief: lane id '{lid}' must be kebab-case")
+        elif BLOCKED_NAME.match(str(lid)):
+            errors.append(f"brief: lane id '{lid}' {BLOCKED_HINT}")
         if ids.count(lid) > 1:
             errors.append(f"brief: lane id '{lid}' is duplicated")
         if lane.get("kind") not in LANE_KINDS:
@@ -141,6 +164,8 @@ def check_round(brief: dict, plan: dict, n: int) -> list[str]:
         lane = a.get("lane", "?")
         if not KEBAB.match(str(lane)):
             errors.append(f"round {n}: lane '{lane}' must be kebab-case")
+        elif BLOCKED_NAME.match(str(lane)):
+            errors.append(f"round {n}: lane '{lane}' {BLOCKED_HINT}")
         if lanes.count(lane) > 1:
             errors.append(f"round {n}: lane '{lane}' has more than one action")
         if a.get("effort") not in RUNNER_EFFORTS:
@@ -245,15 +270,17 @@ def cmd_next(root: Path) -> int:
     if verdict not in VERDICTS:
         return emit({"ok": False, "step": "fix-review", "round": n,
                      "errors": [f"verdict '{verdict}' is not one of {sorted(VERDICTS)}"]})
+    final = outcome(root)
     if verdict in {"continue", "pivot"}:
-        if n >= max_rounds:
-            return emit({"step": "report", "round": n, "final": "stop-budget",
-                         "judge_effort": "xhigh"})
-        return emit({"step": "plan-round", "round": n + 1,
-                     "reason": f"verdict {verdict} but rounds/{n + 1}/plan.md is missing"})
-    if not (root / "report.md").exists():
-        return emit({"step": "report", "round": n, "final": verdict, "judge_effort": "xhigh"})
-    return emit({"step": "done", "round": n, "final": verdict})
+        if n < max_rounds:
+            return emit({"step": "plan-round", "round": n + 1,
+                         "reason": f"verdict {verdict} but rounds/{n + 1}/plan.md is missing"})
+        verdict = "stop-budget"
+    if final is None:
+        return emit({"step": "report", "round": n, "final": verdict, "judge_effort": "xhigh",
+                     "write": str(root / OUTCOME)})
+    return emit({"step": "done", "round": n, "final": verdict, "outcome": str(final),
+                 "recap": str(root / RECAP), "recap_written": (root / RECAP).exists()})
 
 
 # ---------------------------------------------------------------- approve / status
@@ -289,8 +316,10 @@ def cmd_status(root: Path) -> int:
         for c in review.get("criteria", []):
             if c.get("id") in table:
                 table[c["id"]]["rounds"][n] = {"value": c.get("value"), "met": c.get("met")}
+    final = outcome(root)
     return emit({"ok": True, "objective": brief.get("objective"), "criteria": table,
-                 "last": last, "max_rounds": (brief.get("budget") or {}).get("max_rounds")})
+                 "last": last, "max_rounds": (brief.get("budget") or {}).get("max_rounds"),
+                 "outcome": str(final) if final else None})
 
 
 def main(argv: list[str]) -> int:

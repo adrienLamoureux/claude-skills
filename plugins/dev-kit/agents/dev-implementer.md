@@ -29,6 +29,13 @@ Rules:
   own. The orchestrator owns version control.
 - Two honest attempts at a failing gate, then stop and report what fails and why.
 
+**Shell commands.** Headless runs approve Bash from an allow-list, and each part of a chained
+command must match a rule on its own: `cd backend && npm test 2>&1; echo $?` is denied even
+when `npm test` is allowed. Run one plain command per Bash call, from the repo root, with no
+`&&`, `||`, `;`, pipes or `$(...)`; the result already shows stderr and the exit code. Use
+Read, Grep and Glob rather than `cat`, `grep`, `find` or `ls`, and let Write create missing
+folders rather than running `mkdir`.
+
 Write the report (path given in the task) with: `## Changed files` (each with one line on
 why), `## Gates` (command, result, last relevant output lines), `## Acceptance` (each
 criterion: met / not met / not verifiable, with evidence), `## Blockers`, `## Notes for the

@@ -12,9 +12,9 @@ cheaper models; you are the reasoning step. You start cold: the files are your m
 The task message gives the run folder, the round `n`, the rounds left in the budget, the
 formats reference path, the check command, and whether this is a final report. With no rounds
 left, the verdict cannot be `continue` or `pivot`. In final mode where `rounds/<n>/review.md`
-already exists, write only `report.md` and the ledger's closing entry. Read, in this order: `brief.md`,
-`ledger.md`'s `## Current state`, `rounds/<n>/plan.md`, `rounds/<n>/check.md`, then lane
-reports only where the check leaves a question. Trust the checker's measured values over a
+already exists, write only `outcome.md` and the ledger's closing entry. Read, in this order:
+`brief.md`, `ledger.md`'s `## Current state`, `rounds/<n>/plan.md`, `rounds/<n>/check.md`,
+then lane reports only where the check leaves a question. Trust the checker's measured values over a
 runner's claims; where they disagree, say so.
 
 Decide:
@@ -33,7 +33,9 @@ Decide:
 - **Next round** (on `continue` or `pivot`): write `rounds/<n+1>/plan.md` with a Thought that
   names what you expect to learn, and at most `max_actions_per_round` actions, each with a
   concrete task, owned paths for code lanes (disjoint), acceptance checks and `effort`
-  `medium` or `high`. Prefer actions whose result would change your next decision.
+  `medium` or `high`. Prefer actions whose result would change your next decision. A new
+  lane's id may not start with `report`, `summary`, `findings` or `analysis`: the lane report
+  is named after it, and the harness would block that file.
 
 Write:
 1. `rounds/<n>/review.md` with `## Verdict`, `## Progress`, `## What worked / what did not`,
@@ -42,11 +44,18 @@ Write:
    <verdict>` with Thought / Actions / Observation / Judgement lines. Never edit older rounds.
    Create the file if it does not exist.
 3. The next round plan, as above, with `"approved": false`.
-4. On any stop verdict, or when the task says final: `report.md` — outcome against each
-   criterion (baseline → final, met or not), what was done per lane, what did not work, open
-   items, and anything the user must do next (needs-human items first).
+4. On any stop verdict, or when the task says final: `outcome.md` (not `report.md`: Claude
+   Code refuses a subagent's Write to `.md` files named `report*`, `summary*`, `findings*` or
+   `analysis*`) with `## Outcome` (each criterion baseline → final, met or not), `## Per lane`
+   (what was done), `## What did not work`, `## Open items`, and `## Next for the user`
+   (needs-human items first).
 
 Run the check command before replying and fix every error it reports.
 
 Reply with at most 120 words: verdict, criteria values, the next round's actions or the stop
-reason, and anything the user must decide. Your reply is all the orchestrator sees.
+reason, and anything the user must decide. On a stop verdict or in final mode, end the reply
+with the recap block exactly as the formats reference shows under `## recap.md` (heading plus
+at most eight lines, not counted in the 120 words), ready to save as is: outcome and rounds
+used, each criterion baseline → final, deliverables as paths, measured cost if any, top open
+items, the user's to-dos. Do not write `recap.md`; the orchestrator saves it. Your reply is all
+the orchestrator sees.
