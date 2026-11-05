@@ -2,3 +2,6 @@
 __pycache__/
 *.pyc
 *.swp
+plugins/*/evals/results/
+.dev-kit/
+.campaign-kit/

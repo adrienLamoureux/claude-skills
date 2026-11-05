@@ -1,0 +1,9 @@
+{
+  "name": "campaign-kit",
+  "description": "Campaign family, ReAct: interview the user, run parallel lanes in rounds, review and iterate until measurable done criteria are met, with Opus judging and Sonnet executing and checking.",
+  "version": "0.1.0",
+  "author": { "name": "Adrien Lamoureux" },
+  "repository": "https://github.com/adrienLamoureux/claude-skills",
+  "license": "MIT",
+  "keywords": ["react", "campaign", "subagents", "orchestration"]
+}

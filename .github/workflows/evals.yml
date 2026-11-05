@@ -1,0 +1,35 @@
+name: evals
+# Plugin eval suites spend real tokens, so they run only on demand.
+on:
+  workflow_dispatch:
+    inputs:
+      plugin:
+        description: "Plugin folder under plugins/ (e.g. dev-kit)"
+        required: true
+        default: dev-kit
+      max_cost_usd:
+        description: "Hard cost ceiling for the run"
+        required: true
+        default: "5"
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install -g @anthropic-ai/claude-code
+      - name: Run plugin evals
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PLUGIN: ${{ inputs.plugin }}
+          MAX_COST: ${{ inputs.max_cost_usd }}
+        run: |
+          claude plugin eval "plugins/$PLUGIN" --trust-plugin --no-publish \
+            --max-cost-usd "$MAX_COST" --report "eval-report-$PLUGIN.html"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-report-${{ inputs.plugin }}
+          path: eval-report-*.html

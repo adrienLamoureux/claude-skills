@@ -1,0 +1,61 @@
+---
+name: interview
+description: Start a campaign by interviewing the user — objective, measurable done criteria, lanes, guardrails, budget and autonomy — then have an Opus strategist write brief.md and the first round plan, a Sonnet checker measure baselines, and stop for the user's approval. Use when the user runs /campaign-kit:interview, or wants to scope, set up or define a campaign before running it. /campaign-kit:campaign runs this step automatically when no brief exists.
+argument-hint: "<objective in a sentence> [DIR=.campaign-kit/<slug>]"
+---
+
+# Interview
+
+Step 1 of the campaign family: **interview → execute lanes → review and iterate**. The quality
+of every later round depends on criteria a checker can measure the same way twice. Spend the
+user's attention here, not later.
+
+`<campaign-skill-dir>` is the base directory shown when this skill loads with `interview`
+replaced by `campaign`. `TOOL` is `python3 <campaign-skill-dir>/scripts/campaign_tool.py`;
+`FORMATS` is `<campaign-skill-dir>/references/formats.md`.
+
+## Agents and effort
+
+| Role | `subagent_type` | Model | Effort |
+|---|---|---|---|
+| write brief + round 1 | `campaign-kit:campaign-strategist` | Opus | `medium` for 1-2 lanes and a clear metric · `high` default · `xhigh` when the objective spans several systems or the interview left open questions |
+| measure baselines | `campaign-kit:campaign-checker` | Sonnet | `medium` |
+
+Do not pass `model`.
+
+## Workflow
+
+1. **Frame.** Slug from the objective (kebab-case, 2-4 words); run folder `DIR` or
+   `.campaign-kit/<slug>/`. If `brief.md` already exists there, run `TOOL next <DIR>` and
+   continue from the step it names instead of re-interviewing.
+2. **Look before asking** (cheap, yourself): is this a repo, what test or build commands
+   exist, is there an existing metric. One or two commands, not a survey. Questions the
+   environment answers are not worth the user's time.
+3. **Interview** with AskUserQuestion, at most two calls of up to four questions each. Cover,
+   offering concrete options with your recommended one first:
+   - **Done:** how will we know it worked? Turn adjectives into numbers ("faster" → p95 below
+     what?). One guard metric that must not get worse.
+   - **Lanes:** which independent workstreams; anything off-limits.
+   - **Guardrails:** outward-facing actions allowed (default: none — no push, deploy, publish,
+     send, purchase or delete); paths or systems not to touch.
+   - **Budget and autonomy:** max rounds (default 5), actions per round (default 3), and
+     checkpoints: every round, only on pivots (default), or unattended.
+   Write the answers to `<DIR>/interview.md`, the user's own words where they set a rule.
+4. **Brief.** Launch `campaign-kit:campaign-strategist` with: `<DIR>/interview.md`, `FORMATS`,
+   `DIR`, "write brief.md and rounds/1/plan.md", and the check command `TOOL check <DIR>`.
+5. **Baseline.** Launch `campaign-kit:campaign-checker` in `baseline` mode with `DIR` and
+   `FORMATS`. A criterion that comes back `unmeasurable` goes to the user now: fix its check,
+   drop it, or accept it as judged qualitatively.
+6. **Present** in at most 15 lines: objective, each criterion as `baseline → target`, lanes,
+   guardrails, budget and autonomy, round-1 actions, assumptions. Ask for approval or edits.
+7. **On approval:** `TOOL approve <DIR> brief` and `TOOL approve <DIR> round 1`. Next step:
+   `/campaign-kit:campaign <slug>` (runs the loop) or `/campaign-kit:execute <slug>` (one
+   round at a time). Edits go back to the strategist (SendMessage), then repeat 6.
+
+## Rules
+
+- Never start lane work during the interview. The approval gate is where the user sets the
+  guardrails that make unattended rounds safe.
+- Do not write the brief yourself; the strategist is cheaper at it than your context is.
+- The run folder is working state: do not commit it; mention once that `.campaign-kit/` can go
+  in `.gitignore`.
