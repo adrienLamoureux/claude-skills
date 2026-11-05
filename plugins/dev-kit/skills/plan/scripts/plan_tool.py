@@ -5,17 +5,29 @@
       Validate the required sections and the ```json plan-manifest``` block, then print the
       execution waves. Exit 1 when the plan has errors.
 
-  plan_tool.py ownership <plan.md> [--baseline FILE] [--ignore PREFIX ...]
+  plan_tool.py ownership <plan.md> [--baseline FILE] [--ignore DIR ...]
       List files changed in the working tree (tracked and untracked) and the slice that owns
-      each. Files that no slice owns are violations. Exit 1 when there are any.
+      each. Files that no slice owns are violations. Exit 1 when there are any. --ignore skips
+      files under DIR (relative to the cwd or absolute; a DIR outside the repository is a no-op).
 
   plan_tool.py approve <plan.md>
       Set "approved": true in the manifest (run only after the user approves the plan).
+
+  plan_tool.py branch <plan.md> [--name BRANCH]
+      Before the first wave: when the repository is on its default branch (or on a detached
+      HEAD), create and switch to a working branch, default dev-kit/<slug>, or switch to it if
+      it already exists. On any other branch, stay. Never fetches, pushes or touches a remote.
 
   plan_tool.py baseline <plan.md> <run-dir>
       First run only: write <run-dir>/base.txt (HEAD) and <run-dir>/baseline-dirty.txt (files
       already changed before any slice ran). Later runs leave both untouched. Reports dirty
       files that fall under a slice's owned paths, since a worker would overwrite them.
+      <run-dir> may be anywhere, inside the repository or outside it (a CI artifacts folder,
+      a scratch directory); only a run folder inside the repository is left out of the dirty
+      list.
+
+Git commands run in the repository that contains the current directory. Paths are compared
+relative to that repository's root, whichever subdirectory the tool runs from.
 
 Output is JSON on stdout so the orchestrator reads a few lines, not the whole plan.
 """
@@ -40,6 +52,9 @@ REQUIRED_SECTIONS = [
 SIZES = {"S", "M", "L"}
 IMPLEMENTER_EFFORTS = {"medium", "high"}
 SLICE_ID = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+# A slice report is slices/<id>.md, and Claude Code blocks a subagent's Write to
+# `^(REPORT|SUMMARY|FINDINGS|ANALYSIS).*\.md$` (any case), so ids may not start with those words.
+BLOCKED_NAME = re.compile(r"^(report|summary|findings|analysis)", re.I)
 MANIFEST_FENCE = re.compile(r"```json[ \t]+plan-manifest[ \t]*\n(.*?)\n```", re.S)
 WILDCARDS = "*?["
 
@@ -145,6 +160,9 @@ def check(path: Path) -> int:
         sid = s.get("id", "?")
         if not SLICE_ID.match(sid):
             errors.append(f"slice id '{sid}' must be kebab-case")
+        elif BLOCKED_NAME.match(sid):
+            errors.append(f"slice id '{sid}' must not start with report, summary, findings or "
+                          "analysis: Claude Code blocks subagent writes to slices/<id>.md then")
         if ids.count(sid) > 1:
             errors.append(f"slice id '{sid}' is duplicated")
         for key in ("owns", "gates", "acceptance"):
@@ -219,13 +237,40 @@ def compute_waves(slices: list[dict], order: list[str]) -> list[list[str]]:
     return waves
 
 
+# ---------------------------------------------------------------- git
+
+class GitError(RuntimeError):
+    pass
+
+
+def git(*args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(["git", *args], capture_output=True, text=True)
+
+
+def repo_root() -> Path:
+    out = git("rev-parse", "--show-toplevel")
+    if out.returncode != 0:
+        raise GitError("not inside a git repository: run plan_tool.py from the repository "
+                       "being changed")
+    return Path(out.stdout.strip()).resolve()
+
+
+def repo_prefix(path: Path) -> str | None:
+    """`path` as a prefix relative to the repository root (`.dev-kit/x/`), or None outside it."""
+    try:
+        rel = path.resolve().relative_to(repo_root())
+    except ValueError:
+        return None
+    return rel.as_posix() + "/" if rel.parts else None
+
+
 # ---------------------------------------------------------------- ownership
 
 def changed_files() -> list[str]:
-    out = subprocess.run(
-        ["git", "status", "--porcelain=v1", "-uall", "-z"],
-        capture_output=True, text=True, check=True,
-    ).stdout
+    result = git("status", "--porcelain=v1", "-uall", "-z")
+    if result.returncode != 0:
+        raise GitError(result.stderr.strip() or "git status failed")
+    out = result.stdout  # porcelain paths are relative to the repository root
     entries, files = out.split("\0"), []
     i = 0
     while i < len(entries):
@@ -248,6 +293,9 @@ def ownership(path: Path, baseline: Path | None, ignore: list[str]) -> int:
     skip = set()
     if baseline and baseline.exists():
         skip = {line.strip() for line in baseline.read_text().splitlines() if line.strip()}
+    # An ignore prefix may be given relative to the cwd or absolute; git reports paths relative
+    # to the repository root. A prefix outside the repository matches nothing, so it is dropped.
+    ignore = [p for p in (repo_prefix(Path(i)) for i in ignore) if p]
     owners = [(s["id"], [glob_regex(p) for p in s.get("owns", [])]) for s in manifest["slices"]]
     by_slice: dict[str, list[str]] = {}
     unowned = []
@@ -263,7 +311,7 @@ def ownership(path: Path, baseline: Path | None, ignore: list[str]) -> int:
     return emit({"ok": not unowned, "unowned": unowned, "by_slice": by_slice})
 
 
-# ---------------------------------------------------------------- main
+# ---------------------------------------------------------------- emit / baseline
 
 def emit(payload: dict) -> int:
     print(json.dumps(payload, indent=2, ensure_ascii=False))
@@ -274,14 +322,17 @@ def baseline(path: Path, run_dir: Path) -> int:
     manifest, err = read_manifest(path.read_text(encoding="utf-8"))
     if err:
         return emit({"ok": False, "errors": [err]})
+    repo_root()  # fail early, with a clear message, outside a repository
     run_dir.mkdir(parents=True, exist_ok=True)
     base_file, dirty_file = run_dir / "base.txt", run_dir / "baseline-dirty.txt"
     created = not base_file.exists()
     if created:
-        head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True,
-                              check=True).stdout.strip()
-        prefix = run_dir.resolve().relative_to(Path.cwd().resolve()).as_posix() + "/"
-        dirty = [f for f in changed_files() if not f.startswith(prefix)]
+        head = git("rev-parse", "HEAD")
+        if head.returncode != 0:
+            raise GitError(head.stderr.strip() or "git rev-parse HEAD failed")
+        head = head.stdout.strip()
+        prefix = repo_prefix(run_dir)  # None when the run folder lies outside the repository
+        dirty = [f for f in changed_files() if not (prefix and f.startswith(prefix))]
         base_file.write_text(head + "\n", encoding="utf-8")
         dirty_file.write_text("".join(f + "\n" for f in dirty), encoding="utf-8")
     dirty = [line for line in dirty_file.read_text().splitlines() if line] \
@@ -292,14 +343,63 @@ def baseline(path: Path, run_dir: Path) -> int:
     return emit({
         "ok": True,
         "created": created,
+        "run_dir": str(run_dir.resolve()),
         "base": base_file.read_text().strip(),
         "dirty_before_start": dirty,
         "dirty_under_owned_paths": at_risk,
     })
 
 
+# ---------------------------------------------------------------- branch
+
+def default_branch() -> str | None:
+    """origin's HEAD if known, else init.defaultBranch, main or master, whichever exists."""
+    ref = git("symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD")
+    if ref.returncode == 0 and "/" in ref.stdout.strip():
+        return ref.stdout.strip().split("/", 1)[1]
+    configured = git("config", "--get", "init.defaultBranch").stdout.strip()
+    for name in [configured, "main", "master"]:
+        if name and git("show-ref", "--verify", "--quiet", f"refs/heads/{name}").returncode == 0:
+            return name
+    return None
+
+
+def branch(path: Path, name: str | None) -> int:
+    manifest, err = read_manifest(path.read_text(encoding="utf-8"))
+    if err:
+        return emit({"ok": False, "errors": [err]})
+    repo_root()  # fail early, with a clear message, outside a repository
+    target = name or f"dev-kit/{manifest.get('slug') or path.resolve().parent.name}"
+    valid = git("check-ref-format", "--branch", target)
+    if valid.returncode != 0:
+        return emit({"ok": False, "errors": [f"'{target}' is not a valid branch name"]})
+    current = git("symbolic-ref", "--quiet", "--short", "HEAD").stdout.strip() or None
+    default = default_branch()
+    result = {"default": default, "was": current or "(detached HEAD)"}
+    if current is not None and current != default:
+        return emit({"ok": True, **result, "branch": current, "action": "stayed",
+                     "reason": "already on a branch other than the default"})
+    exists = git("show-ref", "--verify", "--quiet", f"refs/heads/{target}").returncode == 0
+    switch = git("switch", target) if exists else git("switch", "-c", target)
+    if switch.returncode != 0:
+        return emit({"ok": False, **result, "branch": target,
+                     "errors": [switch.stderr.strip() or f"git switch {target} failed"]})
+    return emit({"ok": True, **result, "branch": target,
+                 "action": "switched" if exists else "created",
+                 "reason": "was on the default branch" if current else "was on a detached HEAD"})
+
+
+# ---------------------------------------------------------------- main
+
 def main(argv: list[str]) -> int:
-    if len(argv) < 2 or argv[0] not in {"check", "ownership", "approve", "baseline"}:
+    try:
+        return run(argv)
+    except GitError as exc:
+        return emit({"ok": False, "errors": [str(exc)]})
+
+
+def run(argv: list[str]) -> int:
+    if len(argv) < 2 or argv[0] not in {"check", "ownership", "approve", "baseline", "branch"}:
         print(__doc__)
         return 2
     command, plan = argv[0], Path(argv[1])
@@ -307,6 +407,12 @@ def main(argv: list[str]) -> int:
         return emit({"ok": False, "errors": [f"{plan} does not exist"]})
     if command == "check":
         return check(plan)
+    if command == "branch":
+        rest = argv[2:]
+        if rest and (rest[0] != "--name" or len(rest) != 2):
+            print(__doc__)
+            return 2
+        return branch(plan, rest[1] if rest else None)
     if command == "baseline":
         if len(argv) < 3:
             print(__doc__)

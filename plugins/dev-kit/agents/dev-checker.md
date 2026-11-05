@@ -26,6 +26,13 @@ Do this, in order, and record evidence for each:
 Do not edit any file except your report. Do not install dependencies unless a gate cannot run
 at all without it; if so, say what is missing and stop.
 
+**Shell commands.** Headless runs approve Bash from an allow-list, and each part of a chained
+command must match a rule on its own: `cd backend && npm test 2>&1; echo $?` is denied even
+when `npm test` is allowed. Run one plain command per Bash call, from the repo root, with no
+`&&`, `||`, `;`, pipes or `$(...)`; the result already shows stderr and the exit code. Use
+Read, Grep and Glob rather than `cat`, `grep`, `find` or `ls`. Run each gate exactly as
+written. Write creates the report's folder if it is missing, so do not `mkdir`.
+
 Write the report with `## Verdict` (`pass` or `fail`), `## Ownership`, `## Contract drift`,
 `## Gates` (a table: command, exit, evidence), `## Failures by slice`. Put failures and drift
 first; a long list of passes is noise.

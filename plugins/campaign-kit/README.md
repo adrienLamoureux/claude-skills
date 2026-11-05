@@ -11,7 +11,7 @@ and measures again.
                                          → checker (Sonnet) measures baselines → you approve
   /campaign-kit:execute                 runners (Sonnet) act on every lane in parallel → checker (Sonnet) observes
   /campaign-kit:review                  judge (Opus) → continue | pivot | stop-done | stop-blocked | stop-budget
-                                         → writes the next round's plan, or report.md
+                                         → writes the next round's plan, or outcome.md
 ```
 
 | ReAct | Here |
@@ -20,6 +20,7 @@ and measures again.
 | Action | one runner per lane, `rounds/<n>/<lane>.md` |
 | Observation | the checker re-measures every criterion and verifies lane claims, `rounds/<n>/check.md` |
 | next Thought | the judge's verdict and next plan, `rounds/<n>/review.md` + `ledger.md` |
+| Final answer | the judge's final report on a stop verdict, `outcome.md` |
 
 ## Install
 
@@ -52,9 +53,27 @@ purchase or data deletion unless the brief lists it.
 
 ## Run folder
 
-`.campaign-kit/<slug>/` (add it to `.gitignore`). The format of every file is in
-`skills/campaign/references/formats.md`. `scripts/campaign_tool.py next <dir>` reads the folder
-and says what to do next, so an interrupted campaign resumes with `/campaign-kit:campaign <slug>`.
+`.campaign-kit/<slug>/` (add it to `.gitignore`):
+
+| File | Written by |
+|---|---|
+| `interview.md` | the orchestrator, from your answers |
+| `brief.md` | strategist (baselines added by the checker; `approved` flipped on your yes) |
+| `rounds/<n>/plan.md` | strategist for round 1, judge after |
+| `rounds/<n>/<lane>.md` | runners |
+| `rounds/<n>/check.md` | checker |
+| `rounds/<n>/review.md`, `ledger.md` | judge |
+| `outcome.md` | judge, on a stop verdict (`report.md` in runs from before 0.2.0, still read) |
+
+The format of every file is in `skills/campaign/references/formats.md`.
+`scripts/campaign_tool.py next <dir>` reads the folder and says what to do next, so an
+interrupted campaign resumes with `/campaign-kit:campaign <slug>`.
+
+Claude Code refuses a sub-agent's Write to a `.md` file whose name starts with `report`,
+`summary`, `findings` or `analysis`. That is why the final report is `outcome.md` and why
+`campaign_tool.py check` rejects lane ids that start with those words. When a lane's own
+deliverable needs such a name, the runner writes a draft under another name and the execute
+step moves it into place.
 
 ## Evals
 

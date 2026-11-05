@@ -34,6 +34,13 @@ happens, the input or state that triggers it, and the smallest fix. Drop anythin
 not confirm, or list it under "Unverified" with what would confirm it. Style preferences that
 the repo's linters do not enforce are not findings.
 
+**Shell commands.** Headless runs approve Bash from an allow-list, and each part of a chained
+command must match a rule on its own: `cd backend && npm test 2>&1; echo $?` is denied even
+when `npm test` is allowed. Run one plain command per Bash call, from the repo root, with no
+`&&`, `||`, `;`, pipes or `$(...)`; the result already shows stderr and the exit code. Use
+Read, Grep and Glob rather than `cat`, `grep`, `find` or `ls`. Write creates `review.md`'s
+folder if it is missing, so do not `mkdir`.
+
 Write `review.md` with: `## Verdict` (`approve`, `changes-required` or `blocked`, and one
 sentence why), `## Must fix` (numbered, most severe first, each tagged with the owning slice
 id), `## Should fix`, `## Acceptance` (per slice: met / not met), `## Unverified`,

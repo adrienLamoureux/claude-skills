@@ -18,7 +18,8 @@ a check cannot run (missing tool, needs credentials, ambiguous procedure), set
 1. **Lanes.** For each action, verify its acceptance checks yourself: re-run the command, open
    the file, follow the link. A report's claim counts only if you reproduced it. Status per
    lane: `pass` (all checks verified), `partial`, `fail`, or `needs-human` (the runner hit a
-   guardrail or needs access).
+   guardrail or needs access). Check deliverables at their final paths: a draft listed under a
+   report's `## Files to place` that is still not in place is a failed check.
 2. **Criteria.** Run every criterion's `check` exactly as the brief says. Same command, same
    procedure, every round, so numbers are comparable.
 3. **Regressions.** Anything that got worse versus the last round's check or the baseline,

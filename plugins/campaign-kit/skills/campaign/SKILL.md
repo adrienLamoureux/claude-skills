@@ -50,8 +50,10 @@ re-read it every round.
 
 ## Final summary
 
-From `report.md` and `TOOL status <DIR>`: each criterion `baseline → final` (met or not), rounds
-used of the budget, what each lane delivered, open items and the user's to-dos. If the
+From the final report (the `outcome` path that `TOOL next` gives: `outcome.md`, or `report.md`
+in a run started before campaign-kit 0.2.0) and `TOOL status <DIR>`: each criterion
+`baseline → final` (met or not), rounds used of the budget, what each lane delivered, open
+items and the user's to-dos. If the
 project-artifact plugin is installed, offer a shareable status page. Do not commit anything; the
 user decides what of the work to keep.
 

@@ -26,7 +26,8 @@ so routine rounds stay cheap.
 
 1. **Where are we.** `TOOL next <DIR>`.
    - `review` → step 2 with `judge_effort`.
-   - `report` → step 2 in final mode (effort `xhigh`), stating `final` = the tool's `final`.
+   - `report` → step 2 in final mode (effort `xhigh`), stating `final` = the tool's `final`
+     and the output path = the tool's `write` (`<DIR>/outcome.md`).
    - `plan-round` → a round plan is missing. Round 1: launch
      `campaign-kit:campaign-strategist` (effort `high`) asking only for `rounds/1/plan.md`.
      Later rounds: relaunch the judge for round `n-1` asking only for `rounds/<n>/plan.md`
@@ -45,13 +46,16 @@ so routine rounds stay cheap.
    - `done` with `final: stop-blocked` → put each `needs_user` item from the review manifest to
      the user, one question each. Once resolved, the campaign continues with a new round plan
      (judge) or a brief change (interview).
-   - `done` otherwise → show `report.md`'s outcome lines; offer to publish a status page if the
+   - `done` otherwise → show the `## Outcome` lines of the file in the tool's `outcome`
+     (`outcome.md`; `report.md` in older runs); offer to publish a status page if the
      project-artifact plugin is installed.
 
 ## Rules
 
 - The judge decides; do not override its verdict with your own reading. If it looks wrong,
   send it the specific doubt (SendMessage) and let it re-decide.
+- The final report is `outcome.md`, never `report.md`: Claude Code refuses a subagent's Write
+  to `.md` files named `report*`, `summary*`, `findings*` or `analysis*`.
 - Only the user changes the objective or the criteria. A judge proposal to do so arrives as
   `stop-blocked`; on the user's yes, edit the brief through the strategist
   (`/campaign-kit:interview`), not by hand.

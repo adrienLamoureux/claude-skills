@@ -87,7 +87,9 @@ The fence info string must be exactly `json plan-manifest`:
 ````
 
 Rules the checker enforces:
-- slice ids are kebab-case and unique; `owns`, `gates`, `acceptance` are non-empty;
+- slice ids are kebab-case and unique, and do not start with `report`, `summary`, `findings`
+  or `analysis` (the slice report is `slices/<id>.md`, and Claude Code refuses a subagent's
+  Write to `.md` files named that way); `owns`, `gates`, `acceptance` are non-empty;
 - `effort` is `medium` or `high` (the implementer is a Sonnet agent; anything needing more
   thought than `high` is a planning problem: split the slice or freeze more of it);
 - `depends_on` names known slices, no cycles; `merge_order` lists every slice once, after its

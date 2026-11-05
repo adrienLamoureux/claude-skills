@@ -32,7 +32,9 @@ session's context stays small.
 | Use for | one well-defined ticket | an open-ended objective measured over many steps |
 | Steps | `plan` → `implement` → `review` (+ `investigate` for bugs) | `interview` → `execute` lanes → `review` and iterate (`campaign` runs the loop) |
 | Human gates | approve the plan; act on the review | approve the brief; pivots and blockers (configurable) |
-| Run folder | `.dev-kit/<slug>/` | `.campaign-kit/<slug>/` |
+| Run folder | `.dev-kit/<slug>/` (or any `DIR=`, inside or outside the repo) | `.campaign-kit/<slug>/` |
+| Ends with | `review.md`: the verdict | `outcome.md`: each criterion baseline → final |
+| Branch | `implement` creates `dev-kit/<slug>` when on the default branch; never pushes | runners never switch branches unless the brief allows it |
 
 ### Model and effort routing
 
