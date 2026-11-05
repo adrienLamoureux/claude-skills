@@ -1,6 +1,9 @@
 {
   "name": "dev-kit",
-  "description": "Engineering workflow helpers, starting with Claude model-tier routing.",
-  "version": "1.0.0",
-  "author": { "name": "Adrien Lamoureux" }
+  "description": "Developer family, plan-and-execute: plan, implement, review and investigate a ticket with Opus planning and judging and Sonnet executing and checking. Plus model and effort routing advice.",
+  "version": "1.1.0",
+  "author": { "name": "Adrien Lamoureux" },
+  "repository": "https://github.com/adrienLamoureux/claude-skills",
+  "license": "MIT",
+  "keywords": ["plan-and-execute", "subagents", "code-review", "model-routing"]
 }

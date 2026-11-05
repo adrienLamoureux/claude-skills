@@ -4,24 +4,127 @@
     "name": "Adrien Lamoureux"
   },
   "metadata": {
-    "description": "Adrien's Claude Code skills: engineering docs, model routing and résumé tailoring.",
-    "version": "1.0.0"
+    "description": "Adrien's Claude Code skills: developer (plan-and-execute) and campaign (ReAct) families, engineering docs, résumé tailoring, plus pinned picks from Anthropic.",
+    "version": "1.1.0"
   },
   "plugins": [
     {
-      "name": "docs-kit",
-      "source": "./plugins/docs-kit",
-      "description": "Archon twin docs: one fact base rendered as an HTML page for engineers and a Markdown file for coding agents."
-    },
-    {
       "name": "dev-kit",
       "source": "./plugins/dev-kit",
-      "description": "Engineering workflow helpers, starting with Claude model-tier routing."
+      "description": "Developer family, plan-and-execute: plan, implement, review and investigate a ticket with Opus planning and judging and Sonnet executing and checking. Plus model and effort routing advice.",
+      "category": "development"
+    },
+    {
+      "name": "campaign-kit",
+      "source": "./plugins/campaign-kit",
+      "description": "Campaign family, ReAct: interview, run parallel lanes in rounds, review and iterate until measurable done criteria are met, with Opus judging and Sonnet executing and checking.",
+      "category": "development"
+    },
+    {
+      "name": "docs-kit",
+      "source": "./plugins/docs-kit",
+      "description": "Archon twin docs: one fact base rendered as an HTML page for engineers and a Markdown file for coding agents.",
+      "category": "documentation"
     },
     {
       "name": "career-kit",
       "source": "./plugins/career-kit",
-      "description": "Truthful, job-tailored résumés for a resume-forge checkout."
+      "description": "Truthful, job-tailored résumés for a resume-forge checkout.",
+      "category": "productivity"
+    },
+    {
+      "name": "skill-creator",
+      "description": "Anthropic. Create and improve skills, run evals, tune descriptions for triggering. Use it to evolve the skills in this marketplace.",
+      "author": {
+        "name": "Anthropic"
+      },
+      "category": "development",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/anthropics/claude-plugins-official.git",
+        "path": "plugins/skill-creator",
+        "sha": "fa4eb54397ee2faccb6940512a19c017cb1337f3"
+      },
+      "homepage": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/skill-creator"
+    },
+    {
+      "name": "plugin-dev",
+      "description": "Anthropic. Skills and agents for writing Claude Code plugins: structure, agents, skills, hooks, commands, MCP.",
+      "author": {
+        "name": "Anthropic"
+      },
+      "category": "development",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/anthropics/claude-plugins-official.git",
+        "path": "plugins/plugin-dev",
+        "sha": "fa4eb54397ee2faccb6940512a19c017cb1337f3"
+      },
+      "homepage": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/plugin-dev"
+    },
+    {
+      "name": "commit-commands",
+      "description": "Anthropic. /commit, /commit-push-pr and branch cleanup: the step after a dev-kit review approves.",
+      "author": {
+        "name": "Anthropic"
+      },
+      "category": "development",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/anthropics/claude-plugins-official.git",
+        "path": "plugins/commit-commands",
+        "sha": "fa4eb54397ee2faccb6940512a19c017cb1337f3"
+      },
+      "homepage": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/commit-commands"
+    },
+    {
+      "name": "security-guidance",
+      "description": "Anthropic. Security warnings on edits and an LLM diff review at the end of each turn. Opt-in: the per-turn review spends tokens.",
+      "author": {
+        "name": "Anthropic"
+      },
+      "category": "security",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/anthropics/claude-plugins-official.git",
+        "path": "plugins/security-guidance",
+        "sha": "fa4eb54397ee2faccb6940512a19c017cb1337f3"
+      },
+      "homepage": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/security-guidance"
+    },
+    {
+      "name": "project-artifact",
+      "description": "Anthropic. A living, shareable status page for multi-workstream work; pairs with campaign-kit reports.",
+      "author": {
+        "name": "Anthropic"
+      },
+      "category": "productivity",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/anthropics/claude-plugins-official.git",
+        "path": "plugins/project-artifact",
+        "sha": "fa4eb54397ee2faccb6940512a19c017cb1337f3"
+      },
+      "homepage": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/project-artifact"
+    },
+    {
+      "name": "webapp-testing",
+      "description": "Anthropic. Drive a local web app with Playwright to verify UI behaviour; gives checkers a way to prove front-end acceptance criteria.",
+      "author": {
+        "name": "Anthropic"
+      },
+      "category": "development",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/anthropics/skills.git",
+        "path": "skills",
+        "sha": "ca45fc496a3436251f191354091d557da31c15b5"
+      },
+      "strict": false,
+      "skills": [
+        "./webapp-testing"
+      ],
+      "homepage": "https://github.com/anthropics/skills/tree/main/skills/webapp-testing"
     }
   ]
 }

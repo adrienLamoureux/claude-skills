@@ -1,0 +1,334 @@
+#!/usr/bin/env python3
+"""Deterministic checks for a dev-kit plan.md (standard library only).
+
+  plan_tool.py check <plan.md>
+      Validate the required sections and the ```json plan-manifest``` block, then print the
+      execution waves. Exit 1 when the plan has errors.
+
+  plan_tool.py ownership <plan.md> [--baseline FILE] [--ignore PREFIX ...]
+      List files changed in the working tree (tracked and untracked) and the slice that owns
+      each. Files that no slice owns are violations. Exit 1 when there are any.
+
+  plan_tool.py approve <plan.md>
+      Set "approved": true in the manifest (run only after the user approves the plan).
+
+  plan_tool.py baseline <plan.md> <run-dir>
+      First run only: write <run-dir>/base.txt (HEAD) and <run-dir>/baseline-dirty.txt (files
+      already changed before any slice ran). Later runs leave both untouched. Reports dirty
+      files that fall under a slice's owned paths, since a worker would overwrite them.
+
+Output is JSON on stdout so the orchestrator reads a few lines, not the whole plan.
+"""
+from __future__ import annotations
+
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+REQUIRED_SECTIONS = [
+    "problem",
+    "non-goals",
+    "frozen contracts",
+    "slices",
+    "gates",
+    "merge order",
+    "risks",
+    "manifest",
+]
+SIZES = {"S", "M", "L"}
+IMPLEMENTER_EFFORTS = {"medium", "high"}
+SLICE_ID = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+MANIFEST_FENCE = re.compile(r"```json[ \t]+plan-manifest[ \t]*\n(.*?)\n```", re.S)
+WILDCARDS = "*?["
+
+
+# ---------------------------------------------------------------- manifest IO
+
+def read_manifest(text: str) -> tuple[dict | None, str | None]:
+    match = MANIFEST_FENCE.search(text)
+    if not match:
+        return None, "no ```json plan-manifest``` block found"
+    try:
+        return json.loads(match.group(1)), None
+    except json.JSONDecodeError as exc:
+        return None, f"plan-manifest is not valid JSON: {exc}"
+
+
+def write_manifest(path: Path, text: str, manifest: dict) -> None:
+    body = json.dumps(manifest, indent=2, ensure_ascii=False)
+    new = MANIFEST_FENCE.sub(lambda _: f"```json plan-manifest\n{body}\n```", text, count=1)
+    path.write_text(new, encoding="utf-8")
+
+
+# ---------------------------------------------------------------- globs
+
+def glob_regex(pattern: str) -> re.Pattern[str]:
+    """`**` crosses directories, `*` and `?` stay inside one. A bare path also owns its subtree."""
+    pattern = pattern.strip()
+    if pattern.startswith("./"):
+        pattern = pattern[2:]
+    if not any(ch in pattern for ch in WILDCARDS):
+        return re.compile(re.escape(pattern.rstrip("/")) + r"(/.*)?$")
+    out, i = [], 0
+    while i < len(pattern):
+        if pattern.startswith("**/", i):
+            out.append(r"(.*/)?")
+            i += 3
+        elif pattern.startswith("**", i):
+            out.append(r".*")
+            i += 2
+        elif pattern[i] == "*":
+            out.append(r"[^/]*")
+            i += 1
+        elif pattern[i] == "?":
+            out.append(r"[^/]")
+            i += 1
+        else:
+            out.append(re.escape(pattern[i]))
+            i += 1
+    return re.compile("".join(out) + "$")
+
+
+def literal_prefix(pattern: str) -> str:
+    cut = min((pattern.find(ch) for ch in WILDCARDS if ch in pattern), default=len(pattern))
+    return pattern[:cut]
+
+
+def may_overlap(a: str, b: str) -> bool:
+    """Conservative: two patterns may overlap when one literal prefix contains the other."""
+    pa, pb = literal_prefix(a), literal_prefix(b)
+    if not any(ch in a for ch in WILDCARDS) and glob_regex(b).match(a.rstrip("/")):
+        return True
+    if not any(ch in b for ch in WILDCARDS) and glob_regex(a).match(b.rstrip("/")):
+        return True
+    return pa.startswith(pb) or pb.startswith(pa)
+
+
+# ---------------------------------------------------------------- check
+
+def reachable(graph: dict[str, list[str]], start: str) -> set[str]:
+    seen, stack = set(), list(graph.get(start, []))
+    while stack:
+        node = stack.pop()
+        if node not in seen:
+            seen.add(node)
+            stack.extend(graph.get(node, []))
+    return seen
+
+
+def check(path: Path) -> int:
+    text = path.read_text(encoding="utf-8")
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    headings = [h.strip().lower() for h in re.findall(r"^##\s+(.+)$", text, re.M)]
+    for section in REQUIRED_SECTIONS:
+        if not any(h.startswith(section) for h in headings):
+            errors.append(f"missing section '## {section.title()}'")
+
+    manifest, err = read_manifest(text)
+    if err:
+        errors.append(err)
+        return emit({"ok": False, "errors": errors, "warnings": warnings})
+
+    if manifest.get("size") not in SIZES:
+        errors.append("manifest.size must be S, M or L")
+    slices = manifest.get("slices") or []
+    if not slices:
+        errors.append("manifest.slices is empty")
+    ids = [s.get("id", "") for s in slices]
+    by_id = {s.get("id"): s for s in slices}
+
+    for s in slices:
+        sid = s.get("id", "?")
+        if not SLICE_ID.match(sid):
+            errors.append(f"slice id '{sid}' must be kebab-case")
+        if ids.count(sid) > 1:
+            errors.append(f"slice id '{sid}' is duplicated")
+        for key in ("owns", "gates", "acceptance"):
+            if not s.get(key):
+                errors.append(f"slice '{sid}' needs a non-empty '{key}' list")
+        if s.get("effort") not in IMPLEMENTER_EFFORTS:
+            errors.append(f"slice '{sid}' effort must be one of {sorted(IMPLEMENTER_EFFORTS)}")
+        for dep in s.get("depends_on", []):
+            if dep not in by_id:
+                errors.append(f"slice '{sid}' depends on unknown slice '{dep}'")
+
+    graph = {s.get("id"): [d for d in s.get("depends_on", []) if d in by_id] for s in slices}
+    for sid in graph:
+        if sid in reachable(graph, sid):
+            errors.append(f"dependency cycle through slice '{sid}'")
+
+    order = manifest.get("merge_order") or []
+    if sorted(order) != sorted(ids):
+        errors.append("merge_order must list every slice exactly once")
+    else:
+        position = {sid: i for i, sid in enumerate(order)}
+        for sid, deps in graph.items():
+            for dep in deps:
+                if position[dep] > position[sid]:
+                    errors.append(f"merge_order puts '{sid}' before its dependency '{dep}'")
+
+    if not manifest.get("integration_gates"):
+        errors.append("manifest.integration_gates is empty")
+
+    # Slices with no dependency path between them may run in parallel: their paths must not meet.
+    for i, a in enumerate(slices):
+        for b in slices[i + 1:]:
+            ida, idb = a.get("id"), b.get("id")
+            if idb in reachable(graph, ida) or ida in reachable(graph, idb):
+                continue
+            for pa in a.get("owns", []):
+                for pb in b.get("owns", []):
+                    if may_overlap(pa, pb):
+                        errors.append(
+                            f"parallel slices '{ida}' and '{idb}' may both touch '{pa}' / '{pb}': "
+                            "narrow 'owns' or add a depends_on")
+
+    if manifest.get("approved") is not True:
+        warnings.append("plan is not approved yet (manifest.approved != true)")
+
+    waves = compute_waves(slices, order) if not errors else []
+    return emit({
+        "ok": not errors,
+        "errors": errors,
+        "warnings": warnings,
+        "slug": manifest.get("slug"),
+        "size": manifest.get("size"),
+        "approved": manifest.get("approved") is True,
+        "waves": waves,
+        "efforts": {s.get("id"): s.get("effort") for s in slices},
+    })
+
+
+def compute_waves(slices: list[dict], order: list[str]) -> list[list[str]]:
+    position = {sid: i for i, sid in enumerate(order)}
+    pending = {s["id"]: set(s.get("depends_on", [])) for s in slices}
+    done: set[str] = set()
+    waves = []
+    while pending:
+        ready = sorted((sid for sid, deps in pending.items() if deps <= done), key=position.get)
+        if not ready:
+            break
+        waves.append(ready)
+        done.update(ready)
+        for sid in ready:
+            pending.pop(sid)
+    return waves
+
+
+# ---------------------------------------------------------------- ownership
+
+def changed_files() -> list[str]:
+    out = subprocess.run(
+        ["git", "status", "--porcelain=v1", "-uall", "-z"],
+        capture_output=True, text=True, check=True,
+    ).stdout
+    entries, files = out.split("\0"), []
+    i = 0
+    while i < len(entries):
+        entry = entries[i]
+        if not entry:
+            i += 1
+            continue
+        status, name = entry[:2], entry[3:]
+        files.append(name)
+        if "R" in status or "C" in status:
+            i += 1  # the next entry is the rename source
+        i += 1
+    return files
+
+
+def ownership(path: Path, baseline: Path | None, ignore: list[str]) -> int:
+    manifest, err = read_manifest(path.read_text(encoding="utf-8"))
+    if err:
+        return emit({"ok": False, "errors": [err]})
+    skip = set()
+    if baseline and baseline.exists():
+        skip = {line.strip() for line in baseline.read_text().splitlines() if line.strip()}
+    owners = [(s["id"], [glob_regex(p) for p in s.get("owns", [])]) for s in manifest["slices"]]
+    by_slice: dict[str, list[str]] = {}
+    unowned = []
+    for name in changed_files():
+        if name in skip or any(name.startswith(prefix) for prefix in ignore):
+            continue
+        hit = [sid for sid, pats in owners if any(p.match(name) for p in pats)]
+        if hit:
+            for sid in hit:
+                by_slice.setdefault(sid, []).append(name)
+        else:
+            unowned.append(name)
+    return emit({"ok": not unowned, "unowned": unowned, "by_slice": by_slice})
+
+
+# ---------------------------------------------------------------- main
+
+def emit(payload: dict) -> int:
+    print(json.dumps(payload, indent=2, ensure_ascii=False))
+    return 0 if payload.get("ok") else 1
+
+
+def baseline(path: Path, run_dir: Path) -> int:
+    manifest, err = read_manifest(path.read_text(encoding="utf-8"))
+    if err:
+        return emit({"ok": False, "errors": [err]})
+    run_dir.mkdir(parents=True, exist_ok=True)
+    base_file, dirty_file = run_dir / "base.txt", run_dir / "baseline-dirty.txt"
+    created = not base_file.exists()
+    if created:
+        head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True,
+                              check=True).stdout.strip()
+        prefix = run_dir.resolve().relative_to(Path.cwd().resolve()).as_posix() + "/"
+        dirty = [f for f in changed_files() if not f.startswith(prefix)]
+        base_file.write_text(head + "\n", encoding="utf-8")
+        dirty_file.write_text("".join(f + "\n" for f in dirty), encoding="utf-8")
+    dirty = [line for line in dirty_file.read_text().splitlines() if line] \
+        if dirty_file.exists() else []
+    owners = [(s["id"], [glob_regex(p) for p in s.get("owns", [])]) for s in manifest["slices"]]
+    at_risk = {f: [sid for sid, pats in owners if any(p.match(f) for p in pats)] for f in dirty}
+    at_risk = {f: sids for f, sids in at_risk.items() if sids}
+    return emit({
+        "ok": True,
+        "created": created,
+        "base": base_file.read_text().strip(),
+        "dirty_before_start": dirty,
+        "dirty_under_owned_paths": at_risk,
+    })
+
+
+def main(argv: list[str]) -> int:
+    if len(argv) < 2 or argv[0] not in {"check", "ownership", "approve", "baseline"}:
+        print(__doc__)
+        return 2
+    command, plan = argv[0], Path(argv[1])
+    if not plan.exists():
+        return emit({"ok": False, "errors": [f"{plan} does not exist"]})
+    if command == "check":
+        return check(plan)
+    if command == "baseline":
+        if len(argv) < 3:
+            print(__doc__)
+            return 2
+        return baseline(plan, Path(argv[2]))
+    if command == "approve":
+        text = plan.read_text(encoding="utf-8")
+        manifest, err = read_manifest(text)
+        if err:
+            return emit({"ok": False, "errors": [err]})
+        manifest["approved"] = True
+        write_manifest(plan, text, manifest)
+        return emit({"ok": True, "approved": True})
+    baseline_file, ignore, rest = None, [], argv[2:]
+    while rest:
+        flag = rest.pop(0)
+        if flag == "--baseline" and rest:
+            baseline_file = Path(rest.pop(0))
+        elif flag == "--ignore" and rest:
+            ignore.append(rest.pop(0))
+    return ownership(plan, baseline_file, ignore)
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
