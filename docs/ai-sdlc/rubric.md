@@ -6,8 +6,8 @@ Compares three ways to run an AI-SDLC with Claude for a solo developer with many
 sessions, scheduled tasks, Slack, connectors, projects).
 
 Merged from the three fact sheets in `docs/ai-sdlc/research/`. Facts verified online on
-2026-11-05. Every cost and setup number is an **estimate**. One measured data point: USD
-1.19-1.35 per S ticket on 4.6 models (see `docs/ai-sdlc/report.md`, `## Prototype findings`).
+2026-11-05. Every cost and setup number is an **estimate**. Measured for one S ticket: USD
+1.19-1.35 on 4.6 models, USD 0.78 on 5.5 models (see `docs/ai-sdlc/report.md`, `## Prototype findings`).
 
 Scale: 1-5, 5 = best for a solo developer with many repos.
 
@@ -117,8 +117,8 @@ Changes from the sheets, applied so all three columns use the same definition of
 ## Cost and setup
 
 All numbers are estimates. Token volumes per ticket come from the fact sheets' own assumptions
-and have not been measured. The prototype trial gives one data point: USD 1.19-1.35 per S
-ticket on 4.6 models, two runs.
+and have not been measured. The prototype trial gives two data points for one S ticket:
+USD 1.19-1.35 on 4.6 models (two runs) and USD 0.78 on 5.5 models.
 
 | Approach | Setup minutes per new repo | Monthly USD (reference workload) | Pricing basis | Sources |
 |---|---|---|---|---|
