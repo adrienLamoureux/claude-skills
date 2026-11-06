@@ -111,6 +111,11 @@ unmatched command, not as Bash being off. A starting allow-list for the whole pi
 - The plan phase needs only the read and `.dev-kit/**` rules, the git read rules and
   `plan_tool.py`; review adds the gate commands. The same rules work as `--allowedTools`,
   comma-separated.
+- Under the Agent SDK, for example `anthropics/claude-code-action`, set
+  `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`. Subagents start in the background by default, and
+  the host stops at the first result, so the plan would end before the planner runs. The
+  tested GitHub workflow and its setup are in `docs/ai-sdlc/templates/dev-kit.yml` and
+  `docs/ai-sdlc/onboard-a-repo.md` at the repo root.
 
 ## Evals
 

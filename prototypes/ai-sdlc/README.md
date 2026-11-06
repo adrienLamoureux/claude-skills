@@ -90,7 +90,7 @@ Local only, about 8-13 minutes (estimate from `docs/ai-sdlc/research/plugins-ci.
 Note on step 1: committing `.claude/settings.json` is exactly the file the trial's safety check
 refuses to run headless without a look. Review it before running `claude -p` in that repo.
 
-## Outward CI step: not executed
+## Outward CI step: not executed (superseded by docs/ai-sdlc/onboard-a-repo.md)
 
 Running the same pipeline from GitHub needs actions this campaign forbids (a push, a workflow
 file in the target repo, an Actions secret, the Claude GitHub App). It is documented here and

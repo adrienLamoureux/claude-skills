@@ -10,7 +10,7 @@ source_commit: 805ed74
 scope: [docs/ai-sdlc/, prototypes/ai-sdlc/, plugins/dev-kit/]
 tags: [ai-sdlc, adr, plugins-ci, dev-kit, claude-code, headless, github-action, agent-sdk, managed-agents]
 aliases: [AI-SDLC decision, ADR plugins-ci, approach A, Factory-like platform, agent-platform, claude-apps, cloud sessions]
-related: [docs/ai-sdlc/report.md, docs/ai-sdlc/rubric.md, docs/ai-sdlc/research/plugins-ci.md, docs/ai-sdlc/research/agent-platform.md, docs/ai-sdlc/research/claude-apps.md, prototypes/ai-sdlc/README.md]
+related: [docs/ai-sdlc/onboard-a-repo.md, docs/ai-sdlc/report.md, docs/ai-sdlc/rubric.md, docs/ai-sdlc/research/plugins-ci.md, docs/ai-sdlc/research/agent-platform.md, docs/ai-sdlc/research/claude-apps.md, prototypes/ai-sdlc/README.md]
 group: Decisions
 order: 10
 html_twin: adopt-plugins-ci.html
@@ -82,7 +82,7 @@ html_twin: adopt-plugins-ci.html
 - Negative — `--permission-mode dontAsk` denies every chained shell command; dev-kit 1.2.1 has each skill and agent run one plain command per call, and the last trial had one denial (`plugins/dev-kit/README.md`).
 - Negative — no hosted intake queue or dashboard; intake is GitHub issues, `@claude` mentions or a manual `/dev-kit:plan`.
 - Follow-up done — fixes for the trial's gaps ship in dev-kit 1.2.1 and campaign-kit 0.2.0: implement creates a working branch, every dev-kit skill and agent runs one shell command per call, `plan_tool.py baseline` accepts a run folder outside the cwd, and runs end with a `recap.md` (`plugins/dev-kit/README.md`, `plugins/campaign-kit/README.md`). A `trial.sh` run on 2026-11-06 confirmed the branch, the denial recovery and `recap.md`; the baseline outside the cwd was not exercised (`docs/ai-sdlc/report.md:142-173`).
-- Follow-up — wire the GitHub Action per repo: install the Claude GitHub App, add `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN` as a secret, add the workflow sketched in `prototypes/ai-sdlc/README.md:93-104` [proposal].
+- Follow-up done — the GitHub Action is wired with the label-driven workflow `docs/ai-sdlc/templates/dev-kit.yml` in whisk-proto-gcp (end to end on 2026-11-06, USD 0.66) and whisk-studio; every setup step and pitfall is in `docs/ai-sdlc/onboard-a-repo.md`.
 
 ## Revisit when
 - A flat plan cannot absorb the monthly ticket volume — `running-cost` for plugins-ci and claude-apps drops to 3 and the API figures apply (`docs/ai-sdlc/report.md:133-134`).
@@ -99,7 +99,7 @@ html_twin: adopt-plugins-ci.html
 - Whether one Max plan absorbs about 100 tickets a month [unverified].
 - Per-ticket cost on M and L tickets: only one S ticket was measured on 5.5 models (USD 0.78) [unverified].
 - Only web-app was trialled; small-scripts and plugin-repo rest on the rubric alone.
-- The Action workflow's `plugin_marketplaces` and `plugins` inputs were not verified against a live run [unverified].
+- The Action's `plugin_marketplaces` and `plugins` inputs remain untested; the live workflow loads dev-kit with `--plugin-dir` instead [unverified].
 
 ## Sources
 - `docs/ai-sdlc/report.md:83-129` — recommendation per project type

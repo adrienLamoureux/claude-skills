@@ -6,3 +6,4 @@ One row per doc, in reading order. Open the `.md` for agent use, the `.html` for
 | id | group | type | summary | tags | status | updated | page |
 |---|---|---|---|---|---|---|---|
 | [adopt-plugins-ci](adopt-plugins-ci.md) | Decisions | decision | Use Claude Code plugins (dev-kit) run headless with claude -p, plus the Claude Code GitHub Action, as the AI-SDLC for every repo; not a Factory-like platform and not the Claude apps alone. | ai-sdlc, adr, plugins-ci, dev-kit, claude-code, headless, github-action, agent-sdk, managed-agents | current | 2026-11-06 | [html](adopt-plugins-ci.html) |
+| [onboard-a-repo](onboard-a-repo.md) | Guides | onboarding | Every step to run dev-kit (plan, implement, review) on a repo, locally and from GitHub labels, with the pitfalls the first rollout hit and the repos onboarded so far. | ai-sdlc, onboarding, dev-kit, github-actions, claude-code-action, setup-token, plugins-ci, headless | current | 2026-11-06 | [html](onboard-a-repo.html) |
