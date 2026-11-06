@@ -10,7 +10,7 @@ source_commit: b08daef
 scope: [docs/ai-sdlc/templates/dev-kit.yml, plugins/dev-kit/, prototypes/ai-sdlc/]
 tags: [ai-sdlc, onboarding, dev-kit, github-actions, claude-code-action, setup-token, plugins-ci, headless]
 aliases: [AI-SDLC setup, dev-kit workflow, GitHub Action setup, install-github-app, CLAUDE_CODE_OAUTH_TOKEN, label workflow, dev-kit labels]
-related: [docs/ai-sdlc/adopt-plugins-ci.md, docs/ai-sdlc/report.md, plugins/dev-kit/README.md, prototypes/ai-sdlc/README.md]
+related: [docs/ai-sdlc/scheduled-checks.md, docs/ai-sdlc/adopt-plugins-ci.md, docs/ai-sdlc/report.md, plugins/dev-kit/README.md, prototypes/ai-sdlc/README.md]
 group: Guides
 order: 20
 html_twin: onboard-a-repo.html
@@ -105,7 +105,7 @@ html_twin: onboard-a-repo.html
 | claude-skills | plugin-repo | yes | no | local trial 2026-11-06, USD 0.78 (`docs/ai-sdlc/report.md:153`) |
 | resume-forge | small-scripts | yes | no | none |
 | whisk-proto-gcp | web-app | yes | merged 2026-11-06 (PRs #3, #5, #6, #7) | 2026-11-06, issue #4 → PR #8, `approve`, USD 0.66 |
-| whisk-studio | web-app | yes | merged 2026-11-06 (PR #5) | none yet [unverified] |
+| whisk-studio | web-app | yes | merged 2026-11-06 (PR #5); PR #8 (open) adds Claude PR review and two cron checks, off by default | none yet [unverified] |
 
 ## Where things live
 | I want to change | Path |
@@ -116,6 +116,7 @@ html_twin: onboard-a-repo.html
 | Headless allow-list guidance | `plugins/dev-kit/README.md` |
 | Why plugins-ci | `docs/ai-sdlc/adopt-plugins-ci.md` |
 | The local headless trial | `prototypes/ai-sdlc/trial.sh` |
+| Scheduled (cron) checks and their cost | `docs/ai-sdlc/scheduled-checks.md` |
 
 ## Maintaining this onboarding doc
 - Update when a repo is onboarded or removed, when the workflow changes, when a new pitfall appears, or when a dev-kit release changes headless behaviour.
@@ -125,6 +126,7 @@ html_twin: onboard-a-repo.html
 
 ## Change log
 - 2026-11-06 — First version. Workflow tested end to end on whisk-proto-gcp and merged in whisk-studio; starter `@claude` PRs closed; unused `ANTHROPIC_API_KEY` secrets deleted from both repos, leaving only `CLAUDE_CODE_OAUTH_TOKEN`; template added.
+- 2026-11-06 — whisk-studio pilot PRs #6 (backend route split and tests) and #7 (TypeScript start) merged; in PR #8 the nightly live eval and weekly drift check are gated off by default (`ENABLE_NIGHTLY_EVAL`, `ENABLE_DRIFT_CHECK`); `docs/ai-sdlc/scheduled-checks.md` added.
 
 ## Open questions
 - The whisk-studio workflow has not run yet [unverified].
