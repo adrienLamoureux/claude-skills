@@ -3,8 +3,8 @@
 Scope: a solo developer with many repos who wants to optimise per-repo setup effort and monthly
 cost. Scores, phase cells and cost figures are in `docs/ai-sdlc/rubric.md`; per-approach facts
 and sources are in `docs/ai-sdlc/research/`. Everything is verified online on 2026-11-05; cost
-numbers are estimates, with one measured data point: USD 1.19-1.35 per S ticket on 4.6 models
-(see `## Prototype findings`).
+numbers are estimates, with measured points for one S ticket: USD 1.19-1.35 on 4.6 models and
+USD 0.78 on 5.5 models (see `## Prototype findings`).
 
 ## Summary
 
@@ -145,20 +145,28 @@ The prototype in `prototypes/ai-sdlc/` runs `plugins-ci` for `web-app`: `trial.s
 `whisk-proto-gcp` to a scratch folder, checks it for repo hooks and `.mcp.json`, then runs
 dev-kit's plan, implement and review as three `claude -p` phases with per-phase cost caps.
 
-| Run | Exit / ok | Changed files | Gate | Review | Cost (USD) |
-|---|---|---|---|---|---|
-| Lane runner | 0 / true | 2 | unittest pass (13/13) | approve | 1.19 (plan 0.44, implement 0.39, review 0.36) |
-| Checker (independent) | 0 / true | 2 | unittest pass | approve | 1.35 (plan 0.45, implement 0.52, review 0.38) |
+| Run | CLI / models | dev-kit | Exit / ok | Changed files | Gate | Review | Cost (USD) |
+|---|---|---|---|---|---|---|---|
+| Lane runner, 2026-11-05 | 2.1.76 / 4.6 | 1.1.0 | 0 / true | 2 | unittest pass (13/13) | approve | 1.19 (plan 0.44, implement 0.39, review 0.36) |
+| Checker (independent), 2026-11-05 | 2.1.76 / 4.6 | 1.1.0 | 0 / true | 2 | unittest pass | approve | 1.35 (plan 0.45, implement 0.52, review 0.38) |
+| Re-run, 2026-11-06 | 2.1.318 / 5.5 | 1.2.0 | 1 / false | 0 | fail (nothing built) | none | 0.50 (plan 0.35, implement 0.06, review 0.09) |
+| Re-run, 2026-11-06 | 2.1.318 / 5.5 | 1.2.1 | 0 / true | 2 | unittest pass (8/8) | approve | 0.78 (plan 0.33, implement 0.23, review 0.22) |
 
-- Both runs used one S ticket (`prototypes/ai-sdlc/ticket.md`), Claude Code 2.1.76 and the local
-  Claude login. The source repo's HEAD and status were unchanged before and after each run.
-- The subagents ran on `claude-sonnet-4-6` and `claude-opus-4-6`, not the 5.5 models the price
-  table uses, so the measured cost is not on the same basis as the estimates. 100 S tickets a
-  month at this rate is about USD 120-135 on API-equivalent pricing, below the 200-450 estimate;
-  the cost table is left as an estimate until a run on 5.5 models and larger tickets.
-- `dontAsk` denied 4-7 tool calls per run (compound shell commands such as `&&` and `2>&1;`, and
-  one `mkdir`). The agents recovered each time, at the cost of a few turns.
-- `/dev-kit:implement` did not create a working branch; it stayed on `main` in the clone.
+- All runs used one S ticket (`prototypes/ai-sdlc/ticket.md`) and the local Claude login. The
+  source repo's HEAD and status were unchanged before and after each run.
+- Claude Code 2.1.76 resolved `sonnet` and `opus` to `claude-sonnet-4-6` and `claude-opus-4-6`;
+  2.1.318 resolves them to `claude-sonnet-5-5` and `claude-opus-5-5`, the models the price
+  table uses. 100 S tickets a month at the 5.5 rate is about USD 80 on API-equivalent pricing,
+  below the 200-450 estimate; the cost table stays an estimate until M and L tickets are
+  measured.
+- `dontAsk` denied 4-7 tool calls per 4.6 run (compound shell commands such as `&&` and `2>&1;`,
+  and one `mkdir`), and the agents recovered each time. On 5.5 with dev-kit 1.2.0, implement
+  and review each stopped after their first denied compound command, concluding that Bash was
+  off. dev-kit 1.2.1 gives the plan, implement and review skills the one-command-per-call rule
+  its agents already had, and says a denial is one unmatched command. The next run had one
+  denial (`ruff`, not allow-listed) and finished.
+- `/dev-kit:implement` stayed on `main` in the 4.6 runs. With 1.2.1 it created the branch
+  `dev-kit/retry-hint`, and review wrote `recap.md`.
 - A fresh clone has no virtualenv, so the repo's own `make test` gate could not run; the ticket
   uses a stdlib-only gate.
 - Only `web-app` was trialled. `small-scripts` and `plugin-repo` are recommended from the

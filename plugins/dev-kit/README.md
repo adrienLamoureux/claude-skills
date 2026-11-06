@@ -81,8 +81,9 @@ workflows, package scripts, `Makefile`. A repo that states its gates in `AGENTS.
 
 Under `claude -p --permission-mode dontAsk`, every tool call the allow-list does not name is
 denied, and nobody is there to approve it. Each part of a chained shell command must match a
-rule on its own, so the implementer, checker and reviewer run one plain command per Bash call
-(no `&&`, `;`, pipes or `mkdir`). A starting allow-list for the whole pipeline, for the repo's
+rule on its own, so the plan, implement and review skills and every dev-kit agent run one
+plain command per Bash call (no `&&`, `;`, pipes or `mkdir`), and treat a denial as one
+unmatched command, not as Bash being off. A starting allow-list for the whole pipeline, for the repo's
 `.claude/settings.json` or a file passed with `--settings`:
 
 ```json

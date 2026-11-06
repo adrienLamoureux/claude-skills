@@ -13,6 +13,16 @@ and read only their short replies and the checker's verdicts.
 loads, with `implement` replaced by `plan`. `TOOL` below means
 `python3 <plan-skill-dir>/scripts/plan_tool.py`.
 
+## Shell commands
+
+Headless runs (`claude -p --permission-mode dontAsk`) approve Bash from an allow-list, and each
+part of a chained command must match a rule on its own. Run one plain command per Bash call,
+from the repo root, with no `&&`, `||`, `;`, pipes or `$(...)`, and run `TOOL` with the path
+given above. Look at files with Read, Grep and Glob, not `ls`, `cat` or `find`. A denied call
+means that one command matched no rule, not that Bash is off: retry the step as a plain command
+or with Read, Grep or Glob. Stop only when a plain `TOOL` call is denied too, and name the
+allow-list rule it needs.
+
 ## Agents and effort
 
 Launch with the Agent tool. Do not pass `model`. Pass `effort` as stated.

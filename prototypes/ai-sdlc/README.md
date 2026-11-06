@@ -159,3 +159,14 @@ subagents ran on `claude-sonnet-4-6` and `claude-opus-4-6` as reported in each r
 `modelUsage`. Four tool calls were denied by `dontAsk` (a `mkdir -p` outside the allow-list and
 three compound shell commands using `2>&1;` or `&&`); the agents worked around them. A single
 run is one data point for one small ticket, not a distribution.
+
+## Re-run on 5.5 models (2026-11-06)
+
+Claude Code 2.1.318 resolves `sonnet` and `opus` to `claude-sonnet-5-5` and `claude-opus-5-5`.
+
+- With dev-kit 1.2.0 the run failed (exit 1, USD 0.50). Plan passed, but implement and review
+  each sent a chained shell command first, had it denied, concluded Bash was off and stopped.
+- dev-kit 1.2.1 adds the one-command-per-call rule to the plan, implement and review skills.
+  The next run passed: exit 0, `ok: true`, 2 changed files, 8/8 tests, review `approve`,
+  USD 0.78 (plan 0.33, implement 0.23, review 0.22). Implement created the branch
+  `dev-kit/retry-hint`. One call was denied (`ruff`, which the allow-list does not name).

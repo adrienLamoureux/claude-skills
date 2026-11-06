@@ -12,6 +12,16 @@ summary, never the repository.
 
 `<skill-dir>` is the base directory shown when this skill loads.
 
+## Shell commands
+
+Headless runs (`claude -p --permission-mode dontAsk`) approve Bash from an allow-list, and each
+part of a chained command must match a rule on its own. Run one plain command per Bash call,
+from the repo root, with no `&&`, `||`, `;`, pipes or `$(...)`, and run `plan_tool.py` with
+the `<skill-dir>` path. Look at files with Read, Grep and Glob, not `ls`, `cat` or `find`. A
+denied call means that one command matched no rule, not that Bash is off: retry the step as a
+plain command or with Read, Grep or Glob. Stop only when a plain `plan_tool.py` call is denied
+too, and name the allow-list rule it needs.
+
 ## Agents and effort
 
 Launch each with the Agent tool, `subagent_type` as below. Do not pass `model`: the agent file
