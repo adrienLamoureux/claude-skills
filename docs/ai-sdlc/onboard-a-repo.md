@@ -6,7 +6,7 @@ summary: Every step to run dev-kit (plan, implement, review) on a repo, locally 
 status: current
 updated: 2026-11-06
 audience: software engineers
-source_commit: b08daef
+source_commit: 1934e45
 scope: [docs/ai-sdlc/templates/dev-kit.yml, plugins/dev-kit/, prototypes/ai-sdlc/]
 tags: [ai-sdlc, onboarding, dev-kit, github-actions, claude-code-action, setup-token, plugins-ci, headless]
 aliases: [AI-SDLC setup, dev-kit workflow, GitHub Action setup, install-github-app, CLAUDE_CODE_OAUTH_TOKEN, label workflow, dev-kit labels]
@@ -51,7 +51,7 @@ html_twin: onboard-a-repo.html
 - No per-repo install: the user-scope plugin covers every repo on the machine.
 - Make the gates findable: a `Makefile`, package scripts, or an `AGENTS.md` / `CLAUDE.md` naming the test, lint and build commands (`prototypes/ai-sdlc/README.md:84-89`).
 - Committing the repo's project settings file with `enabledPlugins` is optional; a committed `.claude/settings*.json` is exactly what the headless safety check refuses to run without review (`prototypes/ai-sdlc/README.md:90-91`).
-- Headless local runs use `claude -p` with `--permission-mode dontAsk`, an explicit `--allowedTools` list and `--max-budget-usd` (`plugins/dev-kit/README.md:80-84`).
+- Headless local runs use `claude -p` with `--permission-mode dontAsk`, an explicit `--allowedTools` list and `--max-budget-usd` (`plugins/dev-kit/README.md:97-101`).
 
 ## Per-repo setup for the GitHub workflow
 1. Claude GitHub App — install https://github.com/apps/claude with "Only select repositories". Alternative: `/install-github-app` in a terminal `claude` session inside the repo; it also opens a starter `@claude` PR (see Gotchas).
@@ -67,9 +67,12 @@ html_twin: onboard-a-repo.html
 | whisk-proto-gcp | `actions/setup-python` 3.12, `actions/setup-node` 22, `make install` | `make test`, `make lint`, `backend/.venv/bin/python -m pytest`, `backend/.venv/bin/ruff check`, `npm --prefix frontend run`, `python3 -m pytest`, `python3 -m unittest` |
 | whisk-studio | `actions/setup-node` 22 with npm cache, `npm ci --prefix backend`, `npm ci --prefix frontend` | `npm --prefix backend test`, `npm --prefix backend run`, `npm --prefix frontend run`, `bash scripts/check-file-length.sh` |
 
-- Gate rules — one `Bash(<command>:*)` rule per command the plan may name as a gate; the allow-list denies chained commands (`plugins/dev-kit/README.md:82-84`).
+- Gate rules — one `Bash(<command>:*)` rule per command the plan may name as a gate; the allow-list denies chained commands (`plugins/dev-kit/README.md:99-101`).
 - Budgets — `PLAN_BUDGET_USD` 3, `IMPLEMENT_BUDGET_USD` 8, `REVIEW_BUDGET_USD` 4 per run (`docs/ai-sdlc/templates/dev-kit.yml:38-40`).
 - Dependency setup runs only in the `implement` job; the `plan` job reads the repo and needs none.
+- Token use — dev-kit 1.3.0 runs its orchestrating turn at `effort: medium` and starts `dev-checker` and `dev-scout` without `CLAUDE.md`. Jobs pick it up through `DEV_KIT_REF` (default `main`); set it to an older branch or tag to hold a repo back.
+- `/advisor` — not in the template. `--advisor opus` in an Implement step's `claude_args` would let the Sonnet orchestrator and workers consult Opus. The Opus planner and reviewer inherit it too, each call re-reads the whole transcript at Opus rates, and the tool is experimental [unverified in CI].
+- `/goal` — not in the template: a person re-labels the PR between a `changes-required` review and its fix. To fix inside the same job, start the Implement prompt with the dev-kit `/goal` line from `plugins/dev-kit/README.md` and raise `IMPLEMENT_BUDGET_USD` [unverified in CI].
 
 ## Daily use of the dev-kit labels
 - Plan — label an issue you opened `dev-kit:plan`. The job opens a draft PR on `dev-kit/issue-<n>` holding `.dev-kit/issue-<n>/plan.md`, comments the link on the issue and removes the label (`docs/ai-sdlc/templates/dev-kit.yml:115-117`).
@@ -96,6 +99,7 @@ html_twin: onboard-a-repo.html
 - Choosing "Read and write permissions" while ticking that setting makes every workflow's default token writable. dev-kit does not need it: keep the default at read.
 - A Claude step fails in about 2 seconds with `is_error: true`, USD 0 and hidden output — the Action prints Claude's output only with `show_full_output` or `ACTIONS_STEP_DEBUG`; `gh run rerun --debug` is not enough. Fix: `gh variable set DEV_KIT_DEBUG --body true -R <owner>/<repo>`, re-trigger, read the log, then `gh variable delete DEV_KIT_DEBUG -R <owner>/<repo>`; the log is public on a public repo.
 - A headless session stops after one denied chained command (`&&`, `;`, `|`) — fixed in dev-kit 1.2.1, which tells every skill and agent to run one command per call. Fix: keep dev-kit at 1.2.1 or later.
+- `git -C <path> diff` is denied although `Bash(git diff:*)` is allowed — the rule matches the command as written. Seen once in the 1.3.0 trial; the reviewer went on with the checker's evidence. Fix: dev-kit 1.3.0 tells its agents not to prefix commands with `cd` or `git -C`.
 - GitHub rejects a workflow whose plain `run:` value contains `: ` — YAML reads it as a mapping. Fix: use `run: |`.
 - Re-running a failed run reuses the workflow file from the original commit. Fix: after changing the workflow, remove and re-add the label instead of re-running.
 
@@ -126,6 +130,7 @@ html_twin: onboard-a-repo.html
 
 ## Change log
 - 2026-11-06 — First version. Workflow tested end to end on whisk-proto-gcp and merged in whisk-studio; starter `@claude` PRs closed; unused `ANTHROPIC_API_KEY` secrets deleted from both repos, leaving only `CLAUDE_CODE_OAUTH_TOKEN`; template added.
+- 2026-11-06 — dev-kit 1.3.0: orchestrating skills at `effort: medium`, checker and scout without `CLAUDE.md`, shorter descriptions, `/goal` and advisor guidance. The template is unchanged. `prototypes/ai-sdlc/trial.sh` on 1.3.0: all phases passed, verdict `approve`, USD 0.84 against 0.78 on 1.2.1 at the same whisk-proto-gcp commit (one run each, so within run-to-run noise).
 - 2026-11-06 — whisk-studio pilot PRs #6 (backend route split and tests) and #7 (TypeScript start) merged; in PR #8 the nightly live eval and weekly drift check are gated off by default (`ENABLE_NIGHTLY_EVAL`, `ENABLE_DRIFT_CHECK`); `docs/ai-sdlc/scheduled-checks.md` added.
 
 ## Open questions
@@ -133,12 +138,13 @@ html_twin: onboard-a-repo.html
 - The first live plan run failed in 2 seconds at USD 0 for no logged reason; it did not recur [unverified].
 - Whether one Claude plan absorbs about 100 tickets a month [unverified] (`docs/ai-sdlc/adopt-plugins-ci.md:99`).
 - The Action's `plugin_marketplaces` and `plugins` inputs are untested; the workflow uses `--plugin-dir` instead.
+- Whether `/goal` and `--advisor` work under `anthropics/claude-code-action` [unverified].
 
 ## Sources
 - `docs/ai-sdlc/templates/dev-kit.yml` — the workflow tested on whisk-proto-gcp
 - `docs/ai-sdlc/adopt-plugins-ci.md:65-76` — decision and usage per project type
 - `docs/ai-sdlc/report.md:142-173` — local trial runs and model versions
-- `plugins/dev-kit/README.md:80-84` — headless runs and allow-lists
+- `plugins/dev-kit/README.md:97-101` — headless runs and allow-lists
 - `prototypes/ai-sdlc/README.md:76-91` — per-repo local setup
 - https://code.claude.com/docs/en/github-actions — GitHub App, secrets, `claude setup-token`, Action inputs
 - https://code.claude.com/docs/en/sub-agents — background subagents and `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS`

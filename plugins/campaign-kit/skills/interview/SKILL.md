@@ -1,7 +1,8 @@
 ---
 name: interview
-description: Start a campaign by interviewing the user — objective, measurable done criteria, lanes, guardrails, budget and autonomy — then have an Opus strategist write brief.md and the first round plan, a Sonnet checker measure baselines, and stop for the user's approval. Use when the user runs /campaign-kit:interview, or wants to scope, set up or define a campaign before running it. /campaign-kit:campaign runs this step automatically when no brief exists.
+description: Start a campaign-kit campaign — interview the user (done criteria, lanes, guardrails, budget, autonomy), have an Opus strategist write brief.md and the round 1 plan, measure baselines, then stop for approval. Use when the user runs /campaign-kit:interview, or wants to scope, set up or define a campaign before running it.
 argument-hint: "<objective in a sentence> [DIR=.campaign-kit/<slug>]"
+effort: medium
 ---
 
 # Interview
@@ -14,12 +15,24 @@ user's attention here, not later.
 replaced by `campaign`. `TOOL` is `python3 <campaign-skill-dir>/scripts/campaign_tool.py`;
 `FORMATS` is `<campaign-skill-dir>/references/formats.md`.
 
+## Shell commands
+
+Headless runs match each part of a chained command against the Bash allow-list separately. So
+run one plain command per Bash call from the project root (no `&&`, `||`, `;`, pipes, `$(...)`
+or shell variables such as `T=...`), run `TOOL` by its full path, and look at files with Read,
+Grep and Glob, not `ls`, `cat` or `find`. A denial means that one command matched no rule, not
+that Bash is off: retry it plainly or with Read, Grep or Glob. Stop only if a plain `TOOL` call
+is denied, and name the rule it needs.
+
+Give agents `DIR` as an absolute path (the project root joined with `.campaign-kit/<slug>/`),
+so they never resolve it against another folder.
+
 ## Agents and effort
 
-| Role | `subagent_type` | Model | Effort |
-|---|---|---|---|
-| write brief + round 1 | `campaign-kit:campaign-strategist` | Opus | `medium` for 1-2 lanes and a clear metric · `high` default · `xhigh` when the objective spans several systems or the interview left open questions |
-| measure baselines | `campaign-kit:campaign-checker` | Sonnet | `medium` |
+| Role | `subagent_type` | Effort |
+|---|---|---|
+| write brief + round 1 (Opus) | `campaign-kit:campaign-strategist` | `medium` for 1-2 lanes and a clear metric · `high` default · `xhigh` when the objective spans several systems or the interview left open questions |
+| measure baselines (Sonnet) | `campaign-kit:campaign-checker` | `medium` |
 
 Do not pass `model`.
 
@@ -43,14 +56,18 @@ Do not pass `model`.
    Write the answers to `<DIR>/interview.md`, the user's own words where they set a rule.
 4. **Brief.** Launch `campaign-kit:campaign-strategist` with: `<DIR>/interview.md`, `FORMATS`,
    `DIR`, "write brief.md and rounds/1/plan.md", and the check command `TOOL check <DIR>`.
-5. **Baseline.** Launch `campaign-kit:campaign-checker` in `baseline` mode with `DIR` and
-   `FORMATS`. A criterion that comes back `unmeasurable` goes to the user now: fix its check,
-   drop it, or accept it as judged qualitatively.
+5. **Baseline.** Launch `campaign-kit:campaign-checker` in `baseline` mode with `DIR`. A
+   criterion that comes back `unmeasurable` goes to the user now: fix its check, drop it, or
+   accept it as judged qualitatively.
 6. **Present** in at most 15 lines: objective, each criterion as `baseline → target`, lanes,
    guardrails, budget and autonomy, round-1 actions, assumptions. Ask for approval or edits.
 7. **On approval:** `TOOL approve <DIR> brief` and `TOOL approve <DIR> round 1`. Next step:
    `/campaign-kit:campaign <slug>` (runs the loop) or `/campaign-kit:execute <slug>` (one
-   round at a time). Edits go back to the strategist (SendMessage), then repeat 6.
+   round at a time). With autonomy `unattended`, also give the user this line, which keeps the
+   loop going across turns (a skill cannot set a goal itself): `/goal Run
+   /campaign-kit:campaign <slug> until a "campaign <slug>:"
+   status line says done, waiting for you, or blocked.`
+   Edits go back to the strategist (SendMessage), then repeat 6.
 
 ## Rules
 

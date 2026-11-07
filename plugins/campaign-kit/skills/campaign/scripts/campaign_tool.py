@@ -3,8 +3,10 @@
 
   campaign_tool.py next <dir>
       Read the folder and print the next step of the ReAct loop as JSON, with the round
-      number, the lanes still to run, and the effort the judge should get. Resumable: run it
-      after any interruption.
+      number, the lanes still to run (and their effort and model), the effort the judge should
+      get, and a one-line `status` ("campaign <slug>: running | waiting for you | done ...")
+      that the orchestrator repeats so a /goal condition can read it. Resumable: run it after
+      any interruption.
 
   campaign_tool.py check <dir> [round]
       Validate brief.md and a round plan (default: the latest). Exit 1 on errors.
@@ -34,6 +36,7 @@ from pathlib import Path
 AUTONOMY = {"checkpoint-each-round", "checkpoint-on-pivot", "unattended"}
 LANE_KINDS = {"code", "research", "docs", "data", "ops", "other"}
 RUNNER_EFFORTS = {"medium", "high"}
+RUNNER_MODELS = {"sonnet", "opus"}  # opus: one action, after the lane failed or was partial
 VERDICTS = {"continue", "pivot", "stop-done", "stop-blocked", "stop-budget"}
 LANE_STATUS = {"pass", "partial", "fail", "needs-human"}
 KEBAB = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
@@ -93,6 +96,9 @@ def emit(payload: dict) -> int:
     return 0 if payload.get("ok", True) else 1
 
 
+_emit = emit
+
+
 # ---------------------------------------------------------------- overlap
 
 def literal_prefix(pattern: str) -> str:
@@ -147,8 +153,11 @@ def check_brief(brief: dict) -> list[str]:
     return errors
 
 
-def check_round(brief: dict, plan: dict, n: int) -> list[str]:
+def check_round(brief: dict, plan: dict, n: int, prev_check: dict | None = None,
+                prev_plan: dict | None = None) -> list[str]:
     errors = []
+    prev_status = {lane.get("lane"): lane.get("status") for lane in (prev_check or {}).get("lanes", [])}
+    prev_model = {a.get("lane"): a.get("model") for a in (prev_plan or {}).get("actions", [])}
     if plan.get("round") != n:
         errors.append(f"round {n}: manifest says round {plan.get('round')}")
     if not plan.get("thought"):
@@ -170,6 +179,16 @@ def check_round(brief: dict, plan: dict, n: int) -> list[str]:
             errors.append(f"round {n}: lane '{lane}' has more than one action")
         if a.get("effort") not in RUNNER_EFFORTS:
             errors.append(f"round {n}: lane '{lane}' effort must be medium or high")
+        model = a.get("model")
+        if model is not None and model not in RUNNER_MODELS:
+            errors.append(f"round {n}: lane '{lane}' model must be sonnet or opus (or left out)")
+        if model == "opus":
+            if prev_status.get(lane) not in {"fail", "partial"}:
+                errors.append(f"round {n}: lane '{lane}' may run on opus only after the checker "
+                              f"marked it fail or partial in round {n - 1}")
+            elif prev_model.get(lane) == "opus":
+                errors.append(f"round {n}: lane '{lane}' already ran on opus in round {n - 1}; "
+                              f"pivot or stop instead of a second opus attempt")
         for key in ("task", "acceptance"):
             if not a.get(key):
                 errors.append(f"round {n}: lane '{lane}' needs '{key}'")
@@ -183,6 +202,13 @@ def check_round(brief: dict, plan: dict, n: int) -> list[str]:
     return errors
 
 
+def prior_round(root: Path, n: int) -> tuple[dict | None, dict | None]:
+    if n <= 1:
+        return None, None
+    prev = root / "rounds" / str(n - 1)
+    return read(prev / "check.md", "check")[0], read(prev / "plan.md", "round")[0]
+
+
 def cmd_check(root: Path, n: int | None) -> int:
     brief, err = read(root / "brief.md", "brief")
     if err:
@@ -192,7 +218,7 @@ def cmd_check(root: Path, n: int | None) -> int:
     target = n if n is not None else (found[-1] if found else None)
     if target is not None:
         plan, err = read(root / "rounds" / str(target) / "plan.md", "round")
-        errors.extend([err] if err else check_round(brief, plan, target))
+        errors.extend([err] if err else check_round(brief, plan, target, *prior_round(root, target)))
     return emit({"ok": not errors, "errors": errors, "round": target})
 
 
@@ -205,12 +231,32 @@ def judge_effort(check: dict | None, n: int, max_rounds: int) -> str:
     if (criteria and all(c.get("met") for c in criteria)) or n >= max_rounds:
         return "xhigh"
     lanes = check.get("lanes") or []
-    if check.get("regressions") or any(l.get("status") in {"fail", "needs-human"} for l in lanes):
+    if check.get("regressions") or any(l.get("status") in {"fail", "partial", "needs-human"} for l in lanes):
         return "high"
     return "medium"
 
 
+def status_line(slug: str, p: dict) -> str:
+    step, n = p.get("step"), p.get("round")
+    where = f", round {n}" if n else ""
+    if step == "done":
+        return f"campaign {slug}: done — {p.get('final')}{where}"
+    if p.get("needs_user"):
+        return f"campaign {slug}: waiting for you — {step}{where}"
+    if p.get("ok") is False:
+        return f"campaign {slug}: running — {step}, fixing errors{where}"
+    return f"campaign {slug}: running — next {step}{where}"
+
+
 def cmd_next(root: Path) -> int:
+    slug = root.resolve().name
+    if (root / "brief.md").exists():
+        slug = (read(root / "brief.md", "brief")[0] or {}).get("slug") or slug
+
+    def emit(payload: dict) -> int:
+        payload["status"] = status_line(slug, payload)
+        return _emit(payload)
+
     if not (root / "brief.md").exists():
         return emit({"step": "interview", "reason": "no brief.md yet"})
     brief, err = read(root / "brief.md", "brief")
@@ -236,7 +282,7 @@ def cmd_next(root: Path) -> int:
     plan, err = read(rdir / "plan.md", "round")
     if err:
         return emit({"ok": False, "step": "fix-round", "round": n, "errors": [err]})
-    errors = check_round(brief, plan, n)
+    errors = check_round(brief, plan, n, *prior_round(root, n))
     if errors:
         return emit({"ok": False, "step": "fix-round", "round": n, "errors": errors})
 
@@ -254,7 +300,9 @@ def cmd_next(root: Path) -> int:
     if missing:
         return emit({"step": "execute", "round": n, "lanes": missing,
                      "efforts": {a["lane"]: a["effort"] for a in plan["actions"]
-                                 if a["lane"] in missing}})
+                                 if a["lane"] in missing},
+                     "models": {a["lane"]: a["model"] for a in plan["actions"]
+                                if a["lane"] in missing and a.get("model") == "opus"}})
     if not (rdir / "check.md").exists():
         return emit({"step": "check", "round": n})
     check, err = read(rdir / "check.md", "check")

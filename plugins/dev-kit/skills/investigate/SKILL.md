@@ -1,7 +1,8 @@
 ---
 name: investigate
-description: Investigate a bug or unexplained behaviour read-only before anyone fixes it — a Sonnet investigator reproduces it, ranks three hypotheses with file-referenced evidence and designs the smallest experiment that tells them apart; low confidence escalates to Opus. Use when the user runs /dev-kit:investigate, reports a bug, regression, error, crash, flaky test or "why does X happen", or asks to look into something without changing code yet.
+description: Investigate a bug or unexplained behaviour read-only before anyone fixes it — reproduce, rank three hypotheses with path:line evidence, design the smallest experiment that separates them. Use when the user runs /dev-kit:investigate, reports a bug, regression, error, crash, flaky test or "why does X happen", or asks to look into something without changing code yet.
 argument-hint: "<symptom, error, issue URL or #number> [DIR=.dev-kit/<slug>]"
+effort: medium
 ---
 
 # Investigate
@@ -26,7 +27,9 @@ The escalation is the only time a dev-kit skill passes `model` to the Agent tool
    for scratch files, and `<DIR>/investigation.md` as output.
 3. **Escalate** only when its confidence is `low` or its top two hypotheses are both `high`:
    relaunch with `model: opus`, effort `medium`, the same brief, plus "a first pass wrote
-   <DIR>/investigation.md: verify or overturn it and rewrite the file".
+   <DIR>/investigation.md: verify or overturn it and rewrite the file". If the reply says an
+   advisor already reviewed the ranking, do not relaunch: report, and offer the Opus pass as a
+   next step instead.
 4. **Report** in at most 10 lines: reproduced or not, the ranked hypotheses (one line each with
    the key `path:line`), the experiment, confidence.
 5. **Next step**, the user's choice:
