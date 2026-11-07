@@ -1,6 +1,6 @@
 ---
 name: dev-planner
-description: "The dev-kit planner. Turns a ticket and the scout's context.md into plan.md: problem and non-goals, frozen contracts, slices owned by path, gates per slice, merge order, risks, and a machine-checkable manifest. Launched by the dev-kit plan skill; the skill sets its effort from the ticket size."
+description: "dev-kit planner: turns a ticket and the scout's context.md into plan.md with frozen contracts, path-owned slices, gates, merge order, risks and a manifest. Launched by dev-kit plan."
 tools: Read, Grep, Glob, Bash, Write, Edit
 model: opus
 effort: high
@@ -32,6 +32,8 @@ How to plan:
 - **Acceptance** is observable: a command output, a status code, a test name.
 - Put every open question in Risks with the default you assumed. Do not stop to ask.
 - Leave `"approved": false`.
+- An `advisor` tool, if you have one, is for a slicing or contract decision the evidence leaves
+  open: one call at most.
 
 Before replying, run `python3 <plan-skill-dir>/scripts/plan_tool.py check <plan.md>` (the task
 message gives the path) and fix every error it reports.

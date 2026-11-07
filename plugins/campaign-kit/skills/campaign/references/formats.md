@@ -20,12 +20,11 @@ the memory; every agent starts cold and reads only what its brief names.
 Machine-read blocks are fenced ` ```json <kind>-manifest ` and `campaign_tool.py` validates them.
 Everything around them is free Markdown for humans.
 
-**File names.** Claude Code refuses a subagent's Write to any `.md` file whose name starts with
-`report`, `summary`, `findings` or `analysis` (any case). So the final report is `outcome.md`,
-the closing résumé is `recap.md` (safe for either writer), and lane ids, which name the lane
-reports, may not start with those words (`campaign_tool.py
-check` rejects them). Runs started before campaign-kit 0.2.0 have `report.md` instead; the tool
-accepts either.
+**File names.** A subagent cannot write a `.md` file whose name starts with `report`,
+`summary`, `findings` or `analysis` (any case). So the final report is `outcome.md`, the résumé
+is `recap.md`, and lane ids, which name the lane reports, may not start with those words
+(`campaign_tool.py check` rejects them). Runs from before campaign-kit 0.2.0 have `report.md`;
+the tool accepts either.
 
 ## brief.md
 
@@ -87,36 +86,25 @@ would change the approach), `## Actions` (one sub-heading per lane), then:
 ```
 
 One action per lane per round; all actions of a round run in parallel, so code lanes' `owns`
-must not meet. `effort` is `medium` or `high` (runners are Sonnet). A lane may appear that is
+must not meet. `effort` is `medium` or `high` (runners are Sonnet). An action may add
+`"model": "opus"` only when the checker marked its lane `fail` or `partial` in the previous
+round and that round's action for the lane was not already on Opus. A lane may appear that is
 not in the brief only after a `pivot` verdict.
 
 ## rounds/<n>/<lane>.md (runner)
 
 `## Status` (done / partial / failed / needs-human), `## What I did`, `## Evidence` (commands
 and their key output, links, files), `## Acceptance` (each: met / not met / unverified),
-`## Surprises`, `## Suggested next step`, and `## Files to place` when needed (below).
-
-A deliverable whose file name the harness blocks (say `docs/report.md`) is written next to it
-under a name that does not start with a blocked word (`docs/draft-report.md`) and listed under
-`## Files to place` as `` `docs/draft-report.md` -> `docs/report.md` ``. The orchestrator, which
-the rule does not cover, moves each one into place before the checker runs.
+`## Surprises`, `## Suggested next step`, and `## Files to place` when a deliverable needs a
+blocked name: the runner writes `docs/draft-report.md` and lists
+`` `docs/draft-report.md` -> `docs/report.md` ``; the orchestrator moves it before the check.
 
 ## rounds/<n>/check.md (checker)
 
-Free Markdown with the evidence, then:
-
-```json check-manifest
-{
-  "round": 2,
-  "lanes": [{"lane": "api-tests", "status": "pass"}, {"lane": "web-tests", "status": "partial"}],
-  "criteria": [{"id": "api-coverage", "value": "76.4%", "met": false},
-               {"id": "ci-time", "value": "1.04 x", "met": true}],
-  "regressions": []
-}
-```
-
-Lane `status`: `pass`, `partial`, `fail`, `needs-human`. A lane report's claims count only
-when the checker reproduced them.
+Evidence in free Markdown, then a `json check-manifest` block: `round`, `lanes` (each `lane`
+and `status`: `pass`, `partial`, `fail` or `needs-human`), `criteria` (each `id`, `value`,
+`met`) and `regressions` (strings). The checker's agent file shows it in full. A lane report's
+claims count only when the checker reproduced them.
 
 ## rounds/<n>/review.md (judge)
 
@@ -150,10 +138,9 @@ manifest; `campaign_tool.py next` returns `done` once the file exists.
 
 ## recap.md (orchestrator)
 
-The brief résumé the user sees when the campaign ends. The main session writes it, not an
-agent, whenever `campaign_tool.py next` says `done`. The judge's reply on a stop verdict or in
-final mode ends with this block; the orchestrator checks it against `campaign_tool.py status`
-and `outcome.md`, saves it, and shows it. At most eight lines after the heading:
+The résumé the user sees when the campaign ends. The judge's reply on a stop verdict or in
+final mode ends with this block; the main session checks it against `campaign_tool.py status`
+and `outcome.md`, saves it and shows it. At most eight lines after the heading:
 
 ```markdown
 # Recap — coverage-80
@@ -165,10 +152,8 @@ and `outcome.md`, saves it, and shows it. At most eight lines after the heading:
 - You: review and commit the new tests; nothing was pushed
 ```
 
-Outcome with rounds used of the budget; every criterion baseline → final, met or not; what
-was delivered as files or paths; measured cost only if a criterion, the ledger or `outcome.md`
-records one; the top open items; the user's to-dos (needs-human items first). Rewritten each
-time the campaign ends, so a resumed campaign gets a fresh one.
+Cost only when a criterion, the ledger or `outcome.md` records one; the user's to-dos list
+needs-human items first. Rewritten each time the campaign ends.
 
 ## ledger.md (judge only)
 

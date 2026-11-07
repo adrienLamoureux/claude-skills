@@ -47,13 +47,59 @@ session's context stays small.
 | review and judge | `dev-reviewer` | opus | S medium · M high · L or sensitive xhigh |
 | investigate a bug | `dev-investigator` | sonnet | high (escalates to opus medium) |
 | design the campaign | `campaign-strategist` | opus | medium / high / xhigh by scope |
-| act on a lane | `campaign-runner` | sonnet | medium or high, set per action by the judge |
+| act on a lane | `campaign-runner` | sonnet (opus once after a failure) | medium or high, set per action by the judge |
 | measure and verify | `campaign-checker` | sonnet | medium |
 | judge a round | `campaign-judge` | opus | medium routine · high on failure · xhigh final or last round |
 
 Defaults live in each agent's `model:` / `effort:` frontmatter; skills raise or lower effort
 per call. To override, copy an agent file into `~/.claude/agents/` with the same `name:`.
 `/dev-kit:pick-model` gives the same routing advice for any other workflow.
+
+### With `/goal` and `/advisor`
+
+Claude Code features the kits work with but cannot switch on: only you can set a goal or an
+advisor.
+
+- **`/goal <condition>`** keeps the session taking turns until a small fast model judges the
+  condition met from the transcript. Use it to run a kit unattended:
+  - dev-kit, after you approve a plan: `/goal Run /dev-kit:implement <slug>, then
+    /dev-kit:review <slug>; on changes-required run /dev-kit:implement <slug> fix and review
+    again. Done when a review shows verdict approve or blocked, after two fix cycles, or when
+    dev-kit stops on a blocker or a question for me.`
+  - campaign-kit, for an `unattended` campaign: `/goal Run /campaign-kit:campaign <slug> until a
+    "campaign <slug>:" status line says done, waiting for you, or blocked.` Every step prints
+    that line, from `campaign_tool.py next`.
+
+  For one checkable condition a single session can reach (a test suite passes, a changelog is
+  complete), `/goal` alone is cheaper than a campaign: no strategist, checker or judge.
+
+  In the campaign trial (`prototypes/campaign-kit-trial/RESULTS.md`) a working campaign
+  finished in one turn with or without a goal, and the goal ended on the `done` status line
+  after one check (USD 0.003). It mattered only when the kit was blocked. There it pushed past
+  an early stop, but also pressed the orchestrator into measuring the criteria itself, which
+  the skills now forbid. Treat it as insurance for long unattended runs, not as a quality gain.
+- **`/advisor opus`** lets the working model consult Opus, and every sub-agent inherits it.
+  The kits use it only at failure points: a Sonnet worker asks once before a second attempt,
+  and the investigator once before settling a low-confidence ranking (then `investigate`
+  offers its Opus relaunch instead of running it). It also reaches the Opus agents, so every
+  agent prompt caps it at one call. One call re-reads the whole transcript at Opus rates,
+  uncached: about USD 0.14 on a near-empty session. In seven advisor-enabled campaign runs it
+  was never called, because no runner needed a second attempt, so its quality effect is
+  unmeasured. It is experimental, needs the Anthropic API, and is off unless you turn it on.
+  campaign-kit has its own, bounded escalation instead: the judge can put a failing lane's next
+  action on Opus once (see `plugins/campaign-kit/README.md`).
+
+### Token use
+
+- Skill and agent descriptions load in every session, so they say when to use the skill and
+  little else; the detail lives in the skill body, loaded only when it runs.
+- Orchestrating skills set `effort: medium` for their own turn (they dispatch and relay; the
+  agents do the thinking). On the 5.5 models a change of effort keeps the prompt cache. No
+  skill sets `model:`: a per-turn model switch re-reads the whole conversation uncached.
+- The checkers and the scout set `omitClaudeMd: true`: they take everything from their brief,
+  and the scout reads `CLAUDE.md` as a file anyway.
+- Agents write detail to files and reply in at most 80-150 words; the campaign checker carries
+  its manifest format inline instead of reading `formats.md` every round.
 
 ## Use it
 
@@ -92,7 +138,8 @@ claude plugin install claude-md-management@claude-plugins-official   # keeps CLA
 
 1. Copy `template/my-skill/` into a plugin's `skills/` folder (or make a new plugin with its own
    `.claude-plugin/plugin.json` and add it to `marketplace.json`; keep both names identical).
-2. Write the `description` carefully: it is the only text Claude reads to decide when to load it.
+2. Write the `description` carefully: it is the only text Claude reads to decide when to load it,
+   and it loads in every session, so keep it to when to use the skill.
 3. Draft and test it with the `skill-creator` skill; add cases under the plugin's `evals/`.
 4. Run `scripts/validate.sh`, bump the plugin `version`, commit.
 

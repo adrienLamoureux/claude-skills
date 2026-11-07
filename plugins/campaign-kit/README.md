@@ -37,11 +37,14 @@ On Claude Code 2.1.275 or later, one step: `/plugin install campaign-kit --marke
 | Agent | Model | Default effort | Set per call |
 |---|---|---|---|
 | `campaign-strategist` | opus | high | medium for small, xhigh for multi-system objectives |
-| `campaign-runner` | sonnet | high | per action, medium or high, chosen by the judge |
+| `campaign-runner` | sonnet (opus for one action after a lane fails, chosen by the judge) | high | per action, medium or high, chosen by the judge |
 | `campaign-checker` | sonnet | medium | — |
 | `campaign-judge` | opus | high | `campaign_tool.py next` computes it: medium for a routine round, high after a failure or regression, xhigh for the final verdict |
 
-Copy an agent file into `~/.claude/agents/` (same `name:`) to change its model or effort.
+Copy an agent file into `~/.claude/agents/` (same `name:`) to change its model or effort. The
+skills run their own turn at `effort: medium`; the checker starts without `CLAUDE.md`
+(`omitClaudeMd: true`) and carries its manifest format inline, so it does not read
+`formats.md` each round.
 
 ## Checkpoints and autonomy
 
@@ -51,6 +54,61 @@ verdict, a lane that needs a human, and any change to the objective or criteria.
 
 Guardrails default to **no outward-facing actions**: no push, deploy, publish, message, PR,
 purchase or data deletion unless the brief lists it.
+
+## Run it unattended: the `/goal` launcher
+
+The judge decides when a campaign is done; `/goal` only makes sure the session keeps taking
+turns until it gets there. After every step the loop prints a status line from
+`campaign_tool.py next`, for example `campaign coverage-80: running — next review, round 2`,
+`campaign coverage-80: waiting for you — approve-round, round 3` or
+`campaign coverage-80: done — stop-done, round 4`; when it stops on something it cannot clear,
+it prints `campaign coverage-80: blocked — <what would clear it>`.
+
+1. Run the interview and approve the brief (`/campaign-kit:interview` or
+   `/campaign-kit:campaign <objective>`), with autonomy `unattended` or `checkpoint-on-pivot`.
+2. Send the launcher. It ends on the first status line that needs you:
+
+   ```
+   /goal Run /campaign-kit:campaign <slug> until a "campaign <slug>:" status line says done, waiting for you, or blocked.
+   ```
+
+3. Headless, the same line is the prompt:
+
+   ```bash
+   claude -p '/goal Run /campaign-kit:campaign <slug> until a "campaign <slug>:" status line says done, waiting for you, or blocked.' \
+     --plugin-dir /path/to/campaign-kit --model sonnet --permission-mode dontAsk \
+     --allowedTools "<see Headless runs>" --max-budget-usd 10
+   ```
+
+A blocked step stays blocked under a goal: the orchestrator never measures criteria or
+approves rounds itself to get past one. For one checkable condition a single session can
+reach, skip the campaign: a plain `/goal <condition>` is cheaper.
+
+## Escalation and the advisor
+
+- **The judge's Opus escalation** (built in): when the checker marks a lane `fail` or
+  `partial`, the judge first writes a sharper task on Sonnet; when the lane fails again after
+  that, or the cause is clearly reasoning, it puts the lane's next action on Opus
+  (`"model": "opus"` in the round manifest). `campaign_tool.py check` allows it
+  only right after such a round and not twice in a row for the same lane, so the extra cost is
+  bounded and visible in the plan.
+- **The advisor** (optional, `/advisor opus`): runners consult it once, before a second
+  attempt at something that failed; the strategist and judge at most once. It is session-wide
+  and each call re-reads the transcript at Opus rates, so turn it on for campaigns with long,
+  failure-prone lanes and leave it off otherwise.
+
+Trial results for both are in `prototypes/campaign-kit-trial/RESULTS.md` at the repo root.
+
+## Headless runs
+
+Under `claude -p --permission-mode dontAsk`, each part of a chained shell command must match an
+allow-list rule on its own. So every campaign-kit skill and agent runs one plain command per
+Bash call (no `&&`, `;`, pipes, `cd`, `git -C` or shell variables), runs `campaign_tool.py` by
+its full path, and treats a denial as one unmatched command, not as Bash being off. The
+orchestrator passes the run folder to agents as an absolute path. A starting allow-list is
+`TOOLS` in `prototypes/campaign-kit-trial/trial.py`: read tools, `Agent`, `Skill`, writes to the
+lanes' paths and `.campaign-kit/**`, `campaign_tool.py`, the criteria's check commands and the
+read-only git commands.
 
 ## Run folder
 

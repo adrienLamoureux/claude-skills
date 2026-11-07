@@ -1,7 +1,8 @@
 ---
 name: implement
-description: Execute an approved dev-kit plan.md — Sonnet workers implement its slices wave by wave inside their owned paths, a Sonnet checker runs gates, ownership and contract-drift checks after each wave and at integration — then hand off to review. Also applies the must-fix findings of a dev-kit review.md. Use when the user runs /dev-kit:implement, or says to implement, build, execute or carry out a dev-kit plan, or to fix what the dev-kit review found.
+description: Execute an approved dev-kit plan.md — workers implement its slices wave by wave inside their owned paths, a checker gates each wave, then hand off to review. Also applies a dev-kit review's must-fix findings. Use when the user runs /dev-kit:implement, or says to implement, build or carry out a dev-kit plan, or to fix what the dev-kit review found.
 argument-hint: "<slug | plan.md path> [MAX_PARALLEL=3] [branch=<name>] [fix]"
+effort: medium
 ---
 
 # Implement
@@ -15,22 +16,20 @@ loads, with `implement` replaced by `plan`. `TOOL` below means
 
 ## Shell commands
 
-Headless runs (`claude -p --permission-mode dontAsk`) approve Bash from an allow-list, and each
-part of a chained command must match a rule on its own. Run one plain command per Bash call,
-from the repo root, with no `&&`, `||`, `;`, pipes or `$(...)`, and run `TOOL` with the path
-given above. Look at files with Read, Grep and Glob, not `ls`, `cat` or `find`. A denied call
-means that one command matched no rule, not that Bash is off: retry the step as a plain command
-or with Read, Grep or Glob. Stop only when a plain `TOOL` call is denied too, and name the
-allow-list rule it needs.
+Headless runs match each part of a chained command against the Bash allow-list separately. So
+run one plain command per Bash call from the repo root (no `&&`, `||`, `;`, pipes or `$(...)`),
+run `TOOL` by the path above, and look at files with Read, Grep and Glob, not `ls`, `cat` or
+`find`. A denial means that one command matched no rule: retry it plainly or with Read, Grep or
+Glob. Stop only if a plain `TOOL` call is denied, and name the rule it needs.
 
 ## Agents and effort
 
 Launch with the Agent tool. Do not pass `model`. Pass `effort` as stated.
 
-| Role | `subagent_type` | Model | Effort |
-|---|---|---|---|
-| implement one slice | `dev-kit:dev-implementer` | Sonnet | the slice's `effort` from the manifest (`medium` or `high`) |
-| gates, ownership, drift | `dev-kit:dev-checker` | Sonnet | `medium` |
+| Role | `subagent_type` | Effort |
+|---|---|---|
+| implement one slice (Sonnet) | `dev-kit:dev-implementer` | the slice's `effort` from the manifest (`medium` or `high`) |
+| gates, ownership, drift (Sonnet) | `dev-kit:dev-checker` | `medium` |
 
 ## Workflow
 

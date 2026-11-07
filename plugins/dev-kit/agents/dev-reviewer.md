@@ -1,6 +1,6 @@
 ---
 name: dev-reviewer
-description: "The dev-kit reviewer and judge. Reviews the implemented diff against plan.md (contracts, acceptance, non-goals) and for correctness, security and test gaps, verifies each finding in the code, and writes review.md with a verdict. Launched by the dev-kit review skill; the skill sets its effort from the ticket size and risk."
+description: "dev-kit reviewer: judges the implemented diff against plan.md and for correctness, security and test gaps, verifies each finding, writes review.md with a verdict. Launched by dev-kit review."
 tools: Read, Grep, Glob, Bash, Write
 model: opus
 effort: high
@@ -32,14 +32,14 @@ Judge, in this order:
 Every finding must be verified in the code, not inferred from a name: give `path:line`, what
 happens, the input or state that triggers it, and the smallest fix. Drop anything you could
 not confirm, or list it under "Unverified" with what would confirm it. Style preferences that
-the repo's linters do not enforce are not findings.
+the repo's linters do not enforce are not findings. An `advisor` tool, if you have one, is for
+a verdict the evidence leaves open: one call at most.
 
-**Shell commands.** Headless runs approve Bash from an allow-list, and each part of a chained
-command must match a rule on its own: `cd backend && npm test 2>&1; echo $?` is denied even
-when `npm test` is allowed. Run one plain command per Bash call, from the repo root, with no
-`&&`, `||`, `;`, pipes or `$(...)`; the result already shows stderr and the exit code. Use
-Read, Grep and Glob rather than `cat`, `grep`, `find` or `ls`. Write creates `review.md`'s
-folder if it is missing, so do not `mkdir`.
+**Shell commands.** Headless runs match each part of a chained command against the allow-list
+separately: `cd backend && npm test 2>&1; echo $?` is denied even when `npm test` is allowed.
+Run one plain command per Bash call from the repo root, with no `&&`, `||`, `;`, pipes,
+`$(...)`, `cd` or `git -C <path>`; the result already shows stderr and the exit code. Use Read, Grep and Glob, not
+`cat`, `grep`, `find` or `ls`; Write creates missing folders, so no `mkdir`.
 
 Write `review.md` with: `## Verdict` (`approve`, `changes-required` or `blocked`, and one
 sentence why), `## Must fix` (numbered, most severe first, each tagged with the owning slice
@@ -61,8 +61,6 @@ and shows as is; do not write that file yourself:
 - Next: `/dev-kit:implement login-rate-limit fix`, then `/dev-kit:review login-rate-limit`
 ```
 
-Lines: ticket title and size with the verdict; slices done and gates passed or failed (name
-the failing ones); files changed (count, then the first few paths); must-fix findings as
-`path:line`, the problem and the slice (at most three, then "N more in review.md"; drop the
-line when there are none); the next step: commit on `approve`, `/dev-kit:implement <slug> fix`
-on `changes-required`, `/dev-kit:plan` on `blocked`. Your reply is all the orchestrator sees.
+At most three must-fix lines, then "N more in review.md"; drop the line when there are none.
+The next step is commit on `approve`, `/dev-kit:implement <slug> fix` on `changes-required`,
+`/dev-kit:plan` on `blocked`.

@@ -1,7 +1,8 @@
 ---
 name: plan
-description: Plan a software ticket for plan-and-execute delivery — a Sonnet scout maps the repo, an Opus planner writes plan.md with frozen contracts, slices owned by path, gates read from the repo, merge order and risks — then stop for the user's approval. Use when the user runs /dev-kit:plan, or asks to plan, break down, slice or scope a ticket, feature, issue or change before implementing it, especially one touching several areas. Not for open-ended goals measured over many rounds (use campaign-kit) or for unexplained bugs (use /dev-kit:investigate first).
+description: Plan a software ticket before any code is written — plan.md with frozen contracts and path-owned slices, from a scout's repo map, approved by the user. Use when the user runs /dev-kit:plan, or asks to plan, break down, slice or scope a ticket, feature, issue or change before implementing it, especially one touching several areas. Not for open-ended goals measured over rounds (campaign-kit) or unexplained bugs (/dev-kit:investigate first).
 argument-hint: "<ticket text | file | issue URL or #number> [size=S|M|L] [DIR=.dev-kit/<slug>]"
+effort: medium
 ---
 
 # Plan
@@ -14,23 +15,22 @@ summary, never the repository.
 
 ## Shell commands
 
-Headless runs (`claude -p --permission-mode dontAsk`) approve Bash from an allow-list, and each
-part of a chained command must match a rule on its own. Run one plain command per Bash call,
-from the repo root, with no `&&`, `||`, `;`, pipes or `$(...)`, and run `plan_tool.py` with
-the `<skill-dir>` path. Look at files with Read, Grep and Glob, not `ls`, `cat` or `find`. A
-denied call means that one command matched no rule, not that Bash is off: retry the step as a
-plain command or with Read, Grep or Glob. Stop only when a plain `plan_tool.py` call is denied
-too, and name the allow-list rule it needs.
+Headless runs match each part of a chained command against the Bash allow-list separately. So
+run one plain command per Bash call from the repo root (no `&&`, `||`, `;`, pipes or `$(...)`),
+run `plan_tool.py` by its `<skill-dir>` path, and look at files with Read, Grep and Glob, not
+`ls`, `cat` or `find`. A denial means that one command matched no rule: retry it plainly or
+with Read, Grep or Glob. Stop only if a plain `plan_tool.py` call is denied, and name the rule
+it needs.
 
 ## Agents and effort
 
 Launch each with the Agent tool, `subagent_type` as below. Do not pass `model`: the agent file
 sets it. Pass `effort` exactly as this table says for the ticket size.
 
-| Role | `subagent_type` | Model | S | M | L |
-|---|---|---|---|---|---|
-| map the repo | `dev-kit:dev-scout` | Sonnet | medium | medium | high |
-| write the plan | `dev-kit:dev-planner` | Opus | medium | high | xhigh |
+| Role | `subagent_type` | S | M | L |
+|---|---|---|---|---|
+| map the repo (Sonnet) | `dev-kit:dev-scout` | medium | medium | high |
+| write the plan (Opus) | `dev-kit:dev-planner` | medium | high | xhigh |
 
 ## Workflow
 
@@ -58,9 +58,13 @@ sets it. Pass `effort` exactly as this table says for the ticket size.
    by wave (id, owns, effort), integration gates, top risks and open questions with their
    assumed defaults. Then ask for approval, edits, or a different size.
 6. **On approval**, run `python3 <skill-dir>/scripts/plan_tool.py approve <DIR>/plan.md` and
-   tell the user the next step: `/dev-kit:implement <slug>`. On requested edits, send them to
-   the planner (SendMessage if it is still addressable, else a new launch with the current
-   plan as input) and repeat steps 4-5.
+   give the next step: `/dev-kit:implement <slug>`. To run implement → review → fix
+   unattended, the user can send this instead (a skill cannot set a goal itself):
+   `/goal Run /dev-kit:implement <slug>, then /dev-kit:review <slug>; on changes-required run
+   /dev-kit:implement <slug> fix and review again. Done when a review shows verdict approve or
+   blocked, after two fix cycles, or when dev-kit stops on a blocker or a question for me.`
+   On requested edits, send them to the planner (SendMessage if it is still addressable, else
+   a new launch with the current plan as input) and repeat steps 4-5.
 
 ## Rules
 

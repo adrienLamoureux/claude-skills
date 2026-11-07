@@ -1,7 +1,8 @@
 ---
 name: review
-description: Review a campaign round and decide what happens next — an Opus judge weighs the checker's measurements against the brief, chooses continue / pivot / stop, keeps the ledger, writes the next round's plan or the final report; its effort scales with the round (routine, failing, final). Use when the user runs /campaign-kit:review, or asks to review, judge, assess or iterate on a campaign-kit round, or for a campaign's progress or final report. /campaign-kit:campaign calls this step in its loop.
+description: Judge a campaign-kit round — an Opus judge weighs the measurements against the brief, chooses continue / pivot / stop, and writes the next round's plan or the final report. Use when the user runs /campaign-kit:review, or asks to review, judge, assess or iterate on a campaign round, or for a campaign's progress or final report.
 argument-hint: "<slug | run folder> [final]"
+effort: medium
 ---
 
 # Review and iterate
@@ -13,11 +14,23 @@ into the next Thought. You relay its verdict and hold the checkpoints.
 `<campaign-skill-dir>/references/formats.md`, where `<campaign-skill-dir>` is the base
 directory shown when this skill loads with `review` replaced by `campaign`.
 
+## Shell commands
+
+Headless runs match each part of a chained command against the Bash allow-list separately. So
+run one plain command per Bash call from the project root (no `&&`, `||`, `;`, pipes, `$(...)`
+or shell variables such as `T=...`), run `TOOL` by its full path, and look at files with Read,
+Grep and Glob, not `ls`, `cat` or `find`. A denial means that one command matched no rule, not
+that Bash is off: retry it plainly or with Read, Grep or Glob. Stop only if a plain `TOOL` call
+is denied, and name the rule it needs.
+
+Give agents `DIR` as an absolute path (the project root joined with `.campaign-kit/<slug>/`),
+so they never resolve it against another folder.
+
 ## Agent and effort
 
-| Role | `subagent_type` | Model | Effort |
-|---|---|---|---|
-| judge, plan next round, report | `campaign-kit:campaign-judge` | Opus | `judge_effort` from `TOOL next`: `medium` routine round · `high` a lane failed or a metric regressed · `xhigh` criteria look met, last round, or final report |
+| Role | `subagent_type` | Effort |
+|---|---|---|
+| judge, plan next round, report (Opus) | `campaign-kit:campaign-judge` | `judge_effort` from `TOOL next`: `medium` routine round · `high` a lane failed or came back partial, or a metric regressed · `xhigh` criteria look met, last round, or final report |
 
 Do not pass `model`. Use the effort the tool gives; it is computed from the checker's manifest
 so routine rounds stay cheap.
@@ -59,8 +72,7 @@ so routine rounds stay cheap.
 
 - The judge decides; do not override its verdict with your own reading. If it looks wrong,
   send it the specific doubt (SendMessage) and let it re-decide.
-- The final report is `outcome.md`, never `report.md`: Claude Code refuses a subagent's Write
-  to `.md` files named `report*`, `summary*`, `findings*` or `analysis*`.
+- The final report is `outcome.md`, never `report.md`: a subagent cannot write `report*.md`.
 - Only the user changes the objective or the criteria. A judge proposal to do so arrives as
   `stop-blocked`; on the user's yes, edit the brief through the strategist
   (`/campaign-kit:interview`), not by hand.

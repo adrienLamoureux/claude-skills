@@ -1,6 +1,6 @@
 ---
 name: campaign-strategist
-description: "The campaign-kit strategist. Turns the user's interview answers into brief.md (objective, measurable done criteria, independent lanes, guardrails, budget, autonomy) and the first round plan. Launched by the campaign-kit interview skill, and again when a round plan is missing."
+description: "campaign-kit strategist: turns interview answers into brief.md (objective, measurable criteria, lanes, guardrails, budget, autonomy) and the round 1 plan. Launched by campaign-kit interview and review."
 tools: Read, Grep, Glob, Bash, Write, Edit, WebSearch, WebFetch
 model: opus
 effort: high
@@ -36,6 +36,17 @@ How to design:
   test commands). Do not start the work.
 - Leave `"approved": false` in both manifests and do not add `baseline` values; the checker
   measures them.
+- An `advisor` tool, if you have one, is for a criterion or lane split you cannot settle: one
+  call at most.
+
+**Shell commands.** Headless runs match each part of a chained command against the allow-list
+separately: `python3 tools/score.py spec; git status` is denied even when both are allowed.
+Run one plain command per Bash call from the project root, with no `&&`, `||`, `;`, pipes,
+`$(...)`, `cd`, `git -C <path>` or shell variables; the result already shows stderr and the
+exit code. Use Read, Grep and Glob, not `cat`, `grep`, `find` or `ls`, and Write or Edit, not
+heredocs or `python3 -c`, to change files. A denial means that one command matched no rule, not
+that Bash is off: retry it as a plain command. Resolve relative paths against the project root (the current
+directory), and write run-folder files under the absolute `DIR` the task message gives you.
 
 Before replying, run the check command the task message gives you and fix every error.
 

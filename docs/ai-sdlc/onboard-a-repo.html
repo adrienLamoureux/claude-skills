@@ -721,7 +721,7 @@ a.ar-chip:hover { color: var(--ar-accent-ink); border-color: var(--ar-accent); }
       </div>
       <h1>Onboard a repo to the AI-SDLC (dev-kit)</h1>
       <p class="ar-summary">Every step to run dev-kit (plan, implement, review) on a repo, locally and from GitHub labels, with the pitfalls the first rollout hit and the repos onboarded so far.</p>
-      <div class="ar-meta"><span class="ar-chip is-current">current</span><span class="ar-chip">Updated 2026-11-06</span><span class="ar-chip">For software engineers</span><span class="ar-chip">Commit <code>b08daef</code></span><span class="ar-chip">~3 min read</span></div>
+      <div class="ar-meta"><span class="ar-chip is-current">current</span><span class="ar-chip">Updated 2026-11-06</span><span class="ar-chip">For software engineers</span><span class="ar-chip">Commit <code>1934e45</code></span><span class="ar-chip">~3 min read</span></div>
     </header>
     <details class="ar-toc-mobile">
       <summary>Contents</summary>
@@ -810,6 +810,11 @@ flowchart LR
     </tbody>
   </table></div>
   <div class="ar-callout is-tip"><strong>One rule per gate</strong><p>The allow-list denies chained commands, so list each gate on its own.</p></div>
+  <dl class="ar-kv">
+    <dt>Token use</dt><dd>dev-kit 1.3.0 orchestrates at <code>effort: medium</code>; checker and scout skip <code>CLAUDE.md</code>. <code>DEV_KIT_REF</code> picks the release.</dd>
+    <dt>/advisor</dt><dd>Not in the template. It would reach every agent, Opus ones too, at Opus rates. <span class="ar-badge is-unverified">unverified</span></dd>
+    <dt>/goal</dt><dd>Not in the template: a person re-labels the PR before each fix. <span class="ar-badge is-unverified">unverified</span></dd>
+  </dl>
 </section>
 
 <section>
@@ -878,7 +883,7 @@ flowchart LR
  "status": "current",
  "updated": "2026-11-06",
  "audience": "software engineers",
- "source_commit": "b08daef",
+ "source_commit": "1934e45",
  "tags": [
   "ai-sdlc",
   "onboarding",

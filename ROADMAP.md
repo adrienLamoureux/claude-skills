@@ -28,6 +28,14 @@ becomes installable in any repo, with cheap agents doing the reading and writing
 - [ ] Run the eval suite once and tune descriptions on its results (`skill-creator`).
 - [ ] Trim whisk-studio's `AGENTS.md` to its repo-specific rules (stack map, Cognito, slice
       templates, gates) and point it at `dev-kit`.
+- [x] 1.3.0: orchestrating turns at `effort: medium`, checker and scout without `CLAUDE.md`,
+      shorter descriptions, `/goal` line after plan approval, one-call advisor rule.
+- [x] Re-run `prototypes/ai-sdlc/trial.sh` on 1.3.0: passed, `approve`, USD 0.84 against 0.78
+      on 1.2.1 (one run each). No saving shows on this S ticket: the repo has no `CLAUDE.md`.
+- [ ] Measure 1.3.0 where the savings apply: an M ticket in whisk-studio (its `CLAUDE.md`
+      imports an 8 KB `AGENTS.md`), and an interactive Opus session at high effort.
+- [ ] Try the `/goal` implement → review → fix loop headless, and a Sonnet session with
+      `--advisor opus`, and keep whichever is cheaper per approved ticket.
 - [ ] Optional: `isolation: worktree` for parallel slices that cannot be made path-disjoint.
 - [ ] Optional `eval-agent` skill: scaffold a golden set and an eval runner for a repo with an
       LLM agent (modelled on whisk-studio's planned `backend/evals/`).
@@ -49,6 +57,19 @@ research) run as a resumable ReAct loop with measurable done criteria.
       tune round sizes and judge effort thresholds on what it costs.
 - [ ] Publish the campaign status with `project-artifact` automatically at each checkpoint
       when installed.
+- [x] 0.3.0: the checker no longer reads `formats.md` each round; `/goal` line for unattended
+      campaigns; plain `/goal` suggested for single-condition objectives.
+- [x] Headless trial (`prototypes/campaign-kit-trial/`): 4 modes x 2 batches. It found that the
+      checker and orchestrator chained shell commands and a runner resolved the run folder
+      against the wrong root; 0.3.0 adds the one-command rule and absolute `DIR`. Completion
+      went from 1 of 4 runs to 4 of 4.
+- [x] `/goal` launcher with a status line from `campaign_tool.py next`; the judge's bounded Opus
+      escalation for a failing lane (`"model": "opus"`, checked by the tool). Trial batches 3-4:
+      both work end to end; neither changed quality on these fixtures.
+- [ ] Advisor: still never called (0 in 7 runs). Needs a lane Sonnet cannot solve in one
+      attempt even with failing cases in hand; otherwise leave it as documentation.
+- [ ] `/goal`: a long campaign (6+ lanes, 4+ rounds) where a turn is likely to end early.
+- [ ] Run the judge's "sharper Sonnet task first" rule on the escalate fixture with `--runs 3`.
 
 ## Marketplace
 

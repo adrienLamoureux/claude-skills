@@ -1,6 +1,6 @@
 ---
 name: archon-document
-description: Generate an engineering document as a twin pair from one fact base — an HTML page optimised for human engineers (diagrams first, short sentences, lists, the shared Archon palette) and a Markdown file optimised for AI agents (frontmatter index card, self-contained sections, exact identifiers, path:line references, few tokens). Use whenever the user runs /archon-document or asks for "archon" docs, and whenever they want to document, explain or write up a codebase area, module, architecture, design decision / ADR, runbook, onboarding guide, review or technical concept for software engineers — especially when they want both a page people will read and a reference agents can use.
+description: Write an engineering document as a twin pair from one fact base — an HTML page for engineers (diagrams first, short sentences, the shared Archon palette) and a token-lean Markdown file for AI agents (frontmatter, exact identifiers, path:line refs). Use whenever the user runs /archon-document or asks for "archon" docs, and whenever they want to document, explain or write up a codebase area, module, architecture, design decision / ADR, runbook, onboarding guide, review or technical concept for software engineers — especially for both people and agents.
 argument-hint: "<topic or path> [type=architecture|module|decision|runbook|concept|onboarding|review] [out=<dir>]"
 ---
 

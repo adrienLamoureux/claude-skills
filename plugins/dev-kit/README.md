@@ -41,6 +41,23 @@ the repository. Agents write their detail to files in the run folder.
 To change an agent's model or effort, copy its file from `agents/` into `~/.claude/agents/`,
 keep its `name:` line, and edit `model:` / `effort:`; your copy takes precedence.
 
+The skills run their own turn at `effort: medium`. `dev-checker` and `dev-scout` start without
+`CLAUDE.md` (`omitClaudeMd: true`): the checker runs the gates it is given, and the scout reads
+`CLAUDE.md` as a file and records its rules in `context.md`.
+
+## Unattended runs and the advisor
+
+After you approve a plan, one `/goal` runs implement → review → fix without you:
+
+```
+/goal Run /dev-kit:implement <slug>, then /dev-kit:review <slug>; on changes-required run /dev-kit:implement <slug> fix and review again. Done when a review shows verdict approve or blocked, after two fix cycles, or when dev-kit stops on a blocker or a question for me.
+```
+
+With an advisor set (`/advisor opus`), the implementer consults it once before its second
+attempt at a failing gate, the investigator once before settling a low-confidence ranking (then
+`investigate` does not relaunch on Opus), and the planner and reviewer at most once. See
+"With `/goal` and `/advisor`" in the repo README for the costs.
+
 ## Run folder
 
 `.dev-kit/<slug>/` at the repo root (add it to `.gitignore`), or the folder given as `DIR=`,
