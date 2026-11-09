@@ -42,7 +42,8 @@ after a failure, and `TOOL check` allowed it); otherwise do not pass `model`.
    - `execute` → step 2 with its `lanes` and `efforts`.
    - `check` → step 3.
    - `approve-round` → if `needs_user`, show the round's Thought and actions (from
-     `rounds/<n>/plan.md`, the manifest only) and ask; on yes or when `needs_user` is false,
+     `rounds/<n>/plan.md`, the manifest only) and ask with a decision card (below); on yes
+     or when `needs_user` is false,
      `TOOL approve <DIR> round <n>`, then `TOOL next` again.
    - anything else → say which step it is and which skill runs it (`interview`, `review`), and
      stop.
@@ -63,6 +64,12 @@ after a failure, and `TOOL check` allowed it); otherwise do not pass `model`.
 5. **Report** in at most 8 lines: lane statuses, each criterion's value versus last round,
    regressions, and any `needs-human` lane with what it needs. Next: `/campaign-kit:review
    <slug>` (or the loop continues if `campaign` called this).
+
+## Resume block and decision card
+
+Before your first stop, read `<campaign-skill-dir>/references/stop-blocks.md` and follow it: at every stop write `<DIR>/resume.md`,
+and end every stop that waits for the user's choice with its five-line decision card.
+Where examples for this skill: brief · ready, round 2 · plan ready, round 3 · stop-blocked, done
 
 ## Rules
 

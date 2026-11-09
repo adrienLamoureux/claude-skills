@@ -25,8 +25,13 @@ a check cannot run (missing tool, needs credentials, ambiguous procedure), set
    procedure, every round, so numbers are comparable.
 3. **Regressions.** Anything that got worse versus the last round's check or the baseline,
    and any change outside a lane's owned paths (`git status` for code lanes).
-4. Write `rounds/<n>/check.md` with the evidence (commands, exit codes, the key output lines,
-   never full logs), then this block with one entry per lane and per criterion (lane status
+4. **Needs human eyes.** At most three claims or deliverables you could not settle by a
+   command or a file check (prose quality, a research conclusion, a design choice, a test
+   that may assert the wrong thing), each `` `path` — <the question a person must answer> ``.
+   Write the section only when there is something to list; never pad it.
+5. Write `rounds/<n>/check.md` with the evidence (commands, exit codes, the key output lines,
+   never full logs), `## Needs human eyes` when step 4 found any, then this block with one
+   entry per lane and per criterion (lane status
    `pass`, `partial`, `fail` or `needs-human`; `regressions` a list of strings, empty if none):
 
    ```json check-manifest

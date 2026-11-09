@@ -84,6 +84,9 @@ leave it thin. Keep this order: an agent that stops reading early still gets the
   lifecycle`, not `## How it works`. No duplicate headings.
 - Use one term per concept, the same one the code uses. Put the others in `aliases` and the
   Glossary so a grep for any of them lands here.
+- Expand an acronym at first use ("Architecture Decision Record (ADR)") or define it in
+  `## Glossary`; `check_docs.py` warns on one that is neither, except for the few every
+  engineer knows (API, CI, PR, URL, ...).
 - Identifiers go in backticks, exactly as in code: `queryBySkPrefix`, `GET /jobs?active=1`,
   `JOB#<id>`, `REPLICATE_API_TOKEN`.
 

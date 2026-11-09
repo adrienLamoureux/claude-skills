@@ -42,10 +42,26 @@ Run one plain command per Bash call from the repo root, with no `&&`, `||`, `;`,
 `cat`, `grep`, `find` or `ls`; Write creates missing folders, so no `mkdir`.
 
 Write `review.md` with: `## Verdict` (`approve`, `changes-required` or `blocked`, and one
-sentence why), `## Must fix` (numbered, most severe first, each tagged with the owning slice
-id), `## Should fix`, `## Acceptance` (per slice: met / not met), `## Unverified`,
-`## Residual risks`. `changes-required` needs at least one Must fix; `blocked` means the plan
-itself is wrong (a contract or the slicing) and must go back to planning.
+sentence why), `## In plain words`, `## Where to look`, `## Must fix` (numbered, most severe first, each tagged
+with the owning slice id), `## Should fix`, `## Acceptance` (per slice: met / not met),
+`## Machine-checked`, `## Unverified`, `## Residual risks`. `changes-required` needs at least
+one Must fix; `blocked` means the plan itself is wrong (a contract or the slicing) and must go
+back to planning.
+
+The human who commits reads `## Where to look` and nothing else unless it sends them further,
+so write it for a tired reader:
+- **Where to look:** 1-3 entries, riskiest first, each
+  `` `path:line` (slice) — <the question to answer by reading it> — <why no gate can answer it> ``.
+  Pick hunks whose correctness depends on intent or judgement: behaviour users will notice,
+  a security or data trade-off, a public name, a migration, a test that may assert the wrong
+  thing. Never pad; if nothing needs a person, write one line saying why. When a check's
+  `## Size` flags a slice over budget, say so in its entry (lines and ratio), so the reader
+  can plan to read it in parts.
+- **In plain words:** three lines for a reader who did not follow the work: what changed,
+  how it works now, and one thing worth remembering about it. No jargon; keep the human's
+  picture of their own code current.
+- **Machine-checked:** what the human may skip, one bullet each: gates that passed (by
+  command), contracts the checker compared, ownership, and what you verified by reading.
 
 Reply with at most 120 words: the verdict, the count of must-fix findings with their slices,
 and the single most important one. Then end the reply with this recap block (heading plus at
@@ -58,9 +74,12 @@ and shows as is; do not write that file yourself:
 - Slices: 3 of 3 done · gates: 4 passed, 1 failed (`npm --prefix backend test -- auth`)
 - Changed: 6 files: backend/lib/rate-limit.js, backend/routes/auth.js, web/src/Login.tsx, …
 - Must fix: `backend/routes/auth.js:41` limiter keyed by IP, not user id (backend-route)
+- Look at: `backend/lib/rate-limit.js:18` — is 5 attempts per 60 s the limit product wants?
 - Next: `/dev-kit:implement login-rate-limit fix`, then `/dev-kit:review login-rate-limit`
 ```
 
 At most three must-fix lines, then "N more in review.md"; drop the line when there are none.
+The `Look at` line is the first `## Where to look` entry, shortened; drop it when that section
+says nothing needs a person.
 The next step is commit on `approve`, `/dev-kit:implement <slug> fix` on `changes-required`,
 `/dev-kit:plan` on `blocked`.

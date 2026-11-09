@@ -1,0 +1,33 @@
+{
+  "description": "focus-kit: when a session starts or resumes, show the dev-kit and campaign-kit runs that wait on you; when a kit writes a run's resume.md, rebuild the runs page.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/scripts/focus_tool.py",
+              "hook"
+            ],
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "input=$(cat); case \"$input\" in *'/resume.md\"'*) printf '%s' \"$input\" | python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/focus_tool.py\" on-write;; esac; exit 0",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

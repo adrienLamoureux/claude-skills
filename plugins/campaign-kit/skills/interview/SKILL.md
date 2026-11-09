@@ -59,8 +59,9 @@ Do not pass `model`.
 5. **Baseline.** Launch `campaign-kit:campaign-checker` in `baseline` mode with `DIR`. A
    criterion that comes back `unmeasurable` goes to the user now: fix its check, drop it, or
    accept it as judged qualitatively.
-6. **Present** in at most 15 lines: objective, each criterion as `baseline → target`, lanes,
-   guardrails, budget and autonomy, round-1 actions, assumptions. Ask for approval or edits.
+6. **Present** in at most 15 lines: the brief's `## In plain words` lines, objective, each criterion as `baseline → target`, lanes,
+   guardrails, budget and autonomy, round-1 actions, assumptions. End with a decision card
+   (below): approve or edit; its undo cost is nothing run yet.
 7. **On approval:** `TOOL approve <DIR> brief` and `TOOL approve <DIR> round 1`. Next step:
    `/campaign-kit:campaign <slug>` (runs the loop) or `/campaign-kit:execute <slug>` (one
    round at a time). With autonomy `unattended`, also give the user this line, which keeps the
@@ -68,6 +69,12 @@ Do not pass `model`.
    /campaign-kit:campaign <slug> until a "campaign <slug>:"
    status line says done, waiting for you, or blocked.`
    Edits go back to the strategist (SendMessage), then repeat 6.
+
+## Resume block and decision card
+
+Before your first stop, read `<campaign-skill-dir>/references/stop-blocks.md` and follow it: at every stop write `<DIR>/resume.md`,
+and end every stop that waits for the user's choice with its five-line decision card.
+Where examples for this skill: brief · ready, round 2 · plan ready, round 3 · stop-blocked, done
 
 ## Rules
 

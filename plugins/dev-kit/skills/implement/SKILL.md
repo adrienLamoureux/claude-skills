@@ -44,23 +44,24 @@ Launch with the Agent tool. Do not pass `model`. Pass `effort` as stated.
      show the user its errors. Say the branch in one line. It never pushes, and neither do you.
    - `TOOL baseline <DIR>/plan.md <DIR>` records the base commit and the files already dirty,
      on the first run only, so pre-existing edits are never blamed on a slice. If it reports
-     `dirty_under_owned_paths`, ask the user before going on: a worker would overwrite those
-     edits. The run folder may live outside the repository; run `TOOL` from the repository
+     `dirty_under_owned_paths`, ask the user with a decision card before going on: a worker
+     would overwrite those edits (a one-way step for uncommitted work). The run folder may live outside the repository; run `TOOL` from the repository
      root either way.
    - `OWN` below means `TOOL ownership <DIR>/plan.md --baseline <DIR>/baseline-dirty.txt
-     --ignore <DIR>/`.
+     --ignore <DIR>/`, and `SIZE` means `TOOL size <DIR>/plan.md <DIR>`.
 3. **Waves.** For each wave from `check`, in order, in batches of at most `MAX_PARALLEL`
    (default 3):
    - Launch one `dev-kit:dev-implementer` per slice, all in the same message so they run in
      parallel. Brief: plan path, slice id, report path `<DIR>/slices/<id>.md`.
    - When all have replied, launch one `dev-kit:dev-checker` with scope = the slices of the
-     wave, their gates, the `OWN` command, and report path `<DIR>/checks/wave-<n>.md`.
+     wave, their gates, the `OWN` and `SIZE` commands, and report path `<DIR>/checks/wave-<n>.md`.
    - **Fail →** relaunch the implementer of each failing slice with the checker's failure
      lines for that slice (fix mode), then re-check. At most two fix rounds per wave; then
-     stop and report. A blocker that needs another slice's paths or a contract change → stop:
-     the plan must change (`/dev-kit:plan`).
+     stop and report with a decision card. A blocker that needs another slice's paths or a
+     contract change → stop with a decision card: the plan must change (`/dev-kit:plan`).
 4. **Integrate.** After the last wave, launch `dev-kit:dev-checker` with scope `integration`,
-   the manifest's `integration_gates`, the `OWN` command, and `<DIR>/checks/integration.md`.
+   the manifest's `integration_gates`, the `OWN` and `SIZE` commands, and
+   `<DIR>/checks/integration.md`.
    Failures get the same fix loop, attributed by the checker.
 5. **Report** in at most 12 lines: regressions and failing gates first, then slices done,
    files changed count, anything unverified. Next step: `/dev-kit:review <slug>`.
@@ -71,7 +72,13 @@ When the argument says `fix`, or `<DIR>/review.md` has verdict `changes-required
 the last implement run: group its Must-fix findings by the slice id each is tagged with, launch
 one implementer per affected slice with the findings as its brief (effort `high`), then step 4.
 A `blocked` verdict goes back to `/dev-kit:plan`, not here. After two review → fix cycles on
-the same plan, stop and hand the decision to the user.
+the same plan, stop and hand the decision to the user with a decision card.
+
+## Resume block and decision card
+
+Before your first stop, read `<plan-skill-dir>/references/stop-blocks.md` and follow it: at every stop write `<DIR>/resume.md`,
+and end every stop that waits for the user's choice with its five-line decision card.
+Where examples for this skill: plan · ready, implement · blocked, review · approve
 
 ## Rules
 

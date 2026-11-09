@@ -33,7 +33,7 @@ trusting both.
 - `scripts/build_html.py` — body fragment + MD frontmatter → finished page, with its
   collection links once an index exists.
 - `scripts/check_docs.py` — lints the pair: palette drift, sentence length, text-only sections,
-  frontmatter, refs that do not resolve, HTML heavier than MD.
+  frontmatter, refs that do not resolve, HTML heavier than MD, acronyms never expanded.
 - `scripts/build_index.py` — writes the folder's `INDEX.md` and `index.html`, then re-renders
   every page so its up and prev/next links are current. Never hand-edit either index.
 - `references/html-components.md` — component catalogue, human writing rules, diagram rules.

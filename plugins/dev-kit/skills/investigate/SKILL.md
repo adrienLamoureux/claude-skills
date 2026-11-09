@@ -9,6 +9,8 @@ effort: medium
 
 Investigation first, fix second. Nothing in this skill edits tracked files.
 
+`<plan-skill-dir>` is the sibling `plan` skill folder: the base directory shown when this skill loads, with `investigate` replaced by `plan`.
+
 ## Agents and effort
 
 | Role | `subagent_type` | Model | Effort |
@@ -32,10 +34,16 @@ The escalation is the only time a dev-kit skill passes `model` to the Agent tool
    next step instead.
 4. **Report** in at most 10 lines: reproduced or not, the ranked hypotheses (one line each with
    the key `path:line`), the experiment, confidence.
-5. **Next step**, the user's choice:
+5. **Next step**, the user's choice, as a decision card (below):
    - run the experiment (it may need a command the user must run, e.g. against prod);
    - fix it: `/dev-kit:plan` with `<DIR>/investigation.md` as the ticket. A one-file fix with
      high confidence can be planned at size S.
+
+## Resume block and decision card
+
+Before your first stop, read `<plan-skill-dir>/references/stop-blocks.md` and follow it: at every stop write `<DIR>/resume.md`,
+and end every stop that waits for the user's choice with its five-line decision card.
+Where examples for this skill: investigate · done
 
 ## Rules
 

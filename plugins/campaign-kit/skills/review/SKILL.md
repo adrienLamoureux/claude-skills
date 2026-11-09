@@ -55,10 +55,11 @@ so routine rounds stay cheap.
    anything the user must decide or do.
 4. **Checkpoint.** `TOOL next <DIR>` again:
    - `approve-round` with `needs_user: true` (a pivot, or autonomy `checkpoint-each-round`) →
-     ask the user to approve the next round; on yes, `TOOL approve <DIR> round <n>`.
+     ask the user with a decision card (below) to approve the next round; on yes,
+     `TOOL approve <DIR> round <n>`.
    - `approve-round` with `needs_user: false` → approve it and say so.
    - `done` → step 5 first. Then, with `final: stop-blocked`, put each `needs_user` item from
-     the review manifest to the user, one question each; once resolved, the campaign
+     the review manifest to the user, one decision card each; once resolved, the campaign
      continues with a new round plan (judge) or a brief change (interview). Otherwise offer
      to publish a status page if the project-artifact plugin is installed.
 5. **Recap.** The judge's reply ends with a recap block (`## recap.md` in `FORMATS`, at most
@@ -67,6 +68,12 @@ so routine rounds stay cheap.
    that disagrees. If the reply has no block, build it from those two. Write it yourself, not
    through an agent, to the tool's `recap` path (`<DIR>/recap.md`, replacing an older one),
    and show it as is.
+
+## Resume block and decision card
+
+Before your first stop, read `<campaign-skill-dir>/references/stop-blocks.md` and follow it: at every stop write `<DIR>/resume.md`,
+and end every stop that waits for the user's choice with its five-line decision card.
+Where examples for this skill: brief · ready, round 2 · plan ready, round 3 · stop-blocked, done
 
 ## Rules
 

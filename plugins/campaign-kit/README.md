@@ -123,7 +123,8 @@ read-only git commands.
 | `rounds/<n>/check.md` | checker |
 | `rounds/<n>/review.md`, `ledger.md` | judge |
 | `outcome.md` | judge, on a stop verdict (`report.md` in runs from before 0.2.0, still read) |
-| `recap.md` | the main session, when the campaign ends: a brief résumé of at most 8 lines (outcome and rounds used, criteria baseline → final, deliverables, measured cost, open items, your to-dos) |
+| `recap.md` | the main session, when the campaign ends: a brief résumé of at most 8 lines (outcome and rounds used, criteria baseline → final, deliverables, measured cost, open items, where to look, your to-dos) |
+| `resume.md` | the main session, at every stop: where the run is, what it did, what it needs from you (read by focus-kit's inbox) |
 
 The format of every file is in `skills/campaign/references/formats.md`.
 `scripts/campaign_tool.py next <dir>` reads the folder and says what to do next, so an

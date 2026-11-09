@@ -63,6 +63,17 @@ MERMAID_STYLE_RE = re.compile(r"^\s*(style|classDef|linkStyle)\b", re.M)
 RAW_HTML_RE = re.compile(r"<(?!!--)/?[a-zA-Z][^>]*>")
 FENCE_RE = re.compile(r"^```.*?^```", re.S | re.M)
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+ACRONYM_RE = re.compile(r"^([A-Z][A-Z0-9]{1,5})s?$")  # 7+ capitals is a shouted word or a constant
+# Known to any software engineer: never flagged. Everything else needs an expansion at first
+# use ("Architecture Decision Record (ADR)" or "ADR (architecture decision record)"), a
+# `## Glossary` entry, or a place in the frontmatter's aliases.
+COMMON_ACRONYMS = {
+    "AI", "API", "AWS", "CI", "CD", "CLI", "CPU", "CSS", "CSV", "DB", "DNS", "GCP", "GPU", "HTML",
+    "HTTP", "HTTPS", "ID", "IDE", "IO", "IP", "JS", "JSON", "MD", "MIT", "OK", "OS", "PDF", "PR",
+    "RAM", "README", "SDK", "SQL", "SSH", "TCP", "TL", "DR", "TLS", "TS", "UI", "URL", "USD",
+    "UTC", "UX", "VM", "XML", "YAML", "IAM", "PATH", "US", "UK", "EU", "VS",
+    "MUST", "NEVER", "NOT", "ALWAYS", "SHOULD", "AND", "OR", "TODO", "NOTE",
+}
 
 
 class Report:
@@ -134,10 +145,39 @@ def check_md(md_path, repo, report):
             if last > length:
                 report.error("md", f"ref {path}:{last} is past the end of the file ({length} lines)")
 
+    check_acronyms(prose, meta, report)
+
     words = word_count(prose)
     if words > MD_SOFT_WORD_CAP:
         report.warn("md", f"{words} words > {MD_SOFT_WORD_CAP}: split by subtopic and link via 'related'")
     return meta, body
+
+
+def check_acronyms(prose, meta, report):
+    """Warn on acronyms a reader may not know that the doc never expands or defines."""
+    # The glossary is read before code spans are dropped: its terms are written in backticks.
+    glossary = re.search(r"^## Glossary\s*\n(.*?)(?=^## |\Z)", prose, re.M | re.S)
+    text = re.sub(r"`[^`]*`", " ", prose)
+    text = re.sub(r"\]\([^)]*\)|https?://\S+", " ", text)
+    defined = set(re.findall(r"\b[A-Z][A-Z0-9]{1,}\b", glossary.group(1))) if glossary else set()
+    aliases = meta.get("aliases") or []
+    aliases = aliases if isinstance(aliases, list) else [aliases]
+    defined |= {w for a in aliases for w in re.findall(r"\b[A-Z][A-Z0-9]{1,}\b", str(a))}
+    defined |= set(re.findall(r"\(([A-Z][A-Z0-9]{1,})s?\)", text))          # Expansion (ACR)
+    defined |= set(re.findall(r"\b([A-Z][A-Z0-9]{1,})s? \([a-z]", text))     # ACR (expansion)
+    unknown = []
+    for token in text.split():
+        if re.search(r"[/_.\-]\w", token):
+            continue  # a path, identifier, version or hyphenated name, not prose
+        match = ACRONYM_RE.match(token.strip(",;:()[]{}\"'!?.*"))
+        if match:
+            acronym = match.group(1)
+            if (acronym not in COMMON_ACRONYMS and acronym not in defined
+                    and acronym not in unknown):
+                unknown.append(acronym)
+    if unknown:
+        report.warn("md", f"acronyms never expanded or defined (expand at first use, or add to "
+                          f"## Glossary or aliases): {', '.join(unknown[:REPORT_SAMPLE * 3])}")
 
 
 def known_classes():

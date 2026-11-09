@@ -16,6 +16,8 @@ and what to write (`brief.md`, and `rounds/1/plan.md` unless told otherwise). Re
 reference first and follow it exactly, including the fenced manifest blocks.
 
 How to design:
+- **In plain words** opens the brief: three lines (the goal, how the rounds will get there,
+  the main risk) a person can follow without the manifest. It is what the user reads first.
 - **Objective:** one or two sentences in the user's terms, with its constraint (time, cost,
   quality bar) if they gave one.
 - **Done criteria:** two to five, each measurable, each with a `check` precise enough that a

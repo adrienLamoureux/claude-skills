@@ -15,6 +15,7 @@ the memory; every agent starts cold and reads only what its brief names.
   rounds/<n>/review.md  judgement and verdict (judge)
   outcome.md            final report (judge, on a stop verdict)
   recap.md              brief résumé shown when the campaign ends (orchestrator, not an agent)
+  resume.md             Where / Did / Needs at every stop, for a later session (orchestrator)
 ```
 
 Machine-read blocks are fenced ` ```json <kind>-manifest ` and `campaign_tool.py` validates them.
@@ -28,7 +29,8 @@ the tool accepts either.
 
 ## brief.md
 
-Sections: `## Objective`, `## Done criteria`, `## Lanes`, `## Guardrails`, `## Budget and
+Sections: `## In plain words` (three jargon-free lines: the goal, how the rounds will get
+there, the main risk), `## Objective`, `## Done criteria`, `## Lanes`, `## Guardrails`, `## Budget and
 autonomy`, `## Assumptions`, then the manifest:
 
 ```json brief-manifest
@@ -104,7 +106,9 @@ blocked name: the runner writes `docs/draft-report.md` and lists
 Evidence in free Markdown, then a `json check-manifest` block: `round`, `lanes` (each `lane`
 and `status`: `pass`, `partial`, `fail` or `needs-human`), `criteria` (each `id`, `value`,
 `met`) and `regressions` (strings). The checker's agent file shows it in full. A lane report's
-claims count only when the checker reproduced them.
+claims count only when the checker reproduced them. An optional `## Needs human eyes` lists at
+most three claims no command or file check could settle, each `` `path` — question ``; the
+judge draws `outcome.md`'s `## Where to look` from these.
 
 ## rounds/<n>/review.md (judge)
 
@@ -132,9 +136,11 @@ the objective or the criteria.
 ## outcome.md (judge)
 
 The final report, written once, on a stop verdict or in final mode: `## Outcome` (each
-criterion baseline -> final, met or not), `## Per lane` (what each lane delivered),
-`## What did not work`, `## Open items`, `## Next for the user` (needs-human items first). No
-manifest; `campaign_tool.py next` returns `done` once the file exists.
+criterion baseline -> final, met or not), `## Where to look` (1-3 entries, riskiest first:
+`` `path` (lane) — question — why no check can answer it ``), `## Per lane` (what each lane
+delivered), `## Machine-checked` (what the user may skip), `## What did not work`,
+`## Open items`, `## Next for the user` (needs-human items first). No manifest;
+`campaign_tool.py next` returns `done` once the file exists.
 
 ## recap.md (orchestrator)
 
@@ -149,6 +155,7 @@ and `outcome.md`, saves it and shows it. At most eight lines after the heading:
 - Delivered: packages/api/test/billing/**, packages/web/src/test-utils/renderWithProviders.tsx
 - Cost: USD 4.10 measured in round 2 (drop the line when nothing was measured)
 - Open: checkout tests flake under CI load
+- Look at: `packages/api/test/billing/proration.test.ts` — does it assert the rounding finance uses?
 - You: review and commit the new tests; nothing was pushed
 ```
 

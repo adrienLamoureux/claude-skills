@@ -1,0 +1,101 @@
+[
+  {
+    "style": "default",
+    "prompt": "decide",
+    "run": 0,
+    "words": 217,
+    "first_line": true,
+    "next_move": false,
+    "glosses": 2,
+    "cost": 0.0652584,
+    "text": "**Cache `node_modules` first, then shard.** I haven't seen your CI config, so this is general reasoning.\n\n- **Caching is cheap and low-risk.** It's about 10 lines of config, and you can revert it easily. It also doesn't change how your tests run.\n- **Sharding multiplies install time.** With 4 shards, each one runs its own install. Without a cache you pay that cost 4 times, in wall-clock time and in billed minutes.\n- **Sharding will probably save more.** If the tests are ~10–12 of the 14 minutes, 4 shards should bring the job to roughly 4–5 minutes. It's more work, though. You have to balance the shards, check for tests that share state like a DB or ports, and merge coverage and reports.\n\nBefore you pick, open a recent run and look at the step timings. If install is under about 30 seconds, skip the cache and go straight to sharding, because it won't gain you much. Cache the package manager's download store (`~/.npm`, or the pnpm/yarn store) keyed on the lockfile, not `node_modules` itself. That's more robust across Node versions and platforms. `actions/setup-node` with `cache: npm` does this in one line.\n\nWhen you shard, use the runner's built-in splitting if it has one (`jest --shard=1/4`, `vitest --shard`, `playwright --shard`). Use a CI matrix with `fail-fast: false`."
+  },
+  {
+    "style": "default",
+    "prompt": "terms",
+    "run": 0,
+    "words": 365,
+    "first_line": true,
+    "next_move": false,
+    "glosses": 1,
+    "cost": 0.06555040000000001,
+    "text": "## What an idempotency key is\n\nAn idempotency key is a unique identifier attached to a request so the receiver can recognize a retry of an operation it has already performed. If the same key arrives twice, the receiver does the work once and returns or ignores the repeat. That makes retries safe.\n\n## Does your Stripe webhook handler need one?\n\n**Yes, in effect.** Stripe delivers webhooks **at least once**. It retries on timeouts and non-2xx responses, for up to about 3 days in live mode. Events can also arrive out of order or be redelivered after you already processed them. Without protection, a retry can insert a duplicate order.\n\nYou don't need to generate a key yourself. Stripe gives you one: **`event.id`** (`evt_...`). It is the same across every redelivery of an event. Use it, or a business identifier such as the Checkout Session or PaymentIntent ID, as the dedup key.\n\n## Implementation in Postgres\n\nThe most robust pattern is to let a unique constraint decide, in the same transaction as the order write:\n\n```sql\nCREATE TABLE processed_events (\n  event_id text PRIMARY KEY,\n  processed_at timestamptz NOT NULL DEFAULT now()\n);\n```\n\n```sql\nBEGIN;\nINSERT INTO processed_events (event_id) VALUES ($1) ON CONFLICT DO NOTHING;\n-- if 0 rows inserted: already handled, COMMIT and return 200\n-- otherwise: insert the order, then COMMIT\n```\n\nBecause the dedup insert and the order insert share one transaction, a crash can't leave one without the other. Concurrent deliveries are also safe, since only one insert wins the primary key.\n\nAlternatively, put a unique constraint on the order itself, for example `stripe_payment_intent_id UNIQUE`. Then use `INSERT ... ON CONFLICT DO NOTHING` (or `DO UPDATE`). This is simpler if each event maps to exactly one order.\n\n## Other points\n\n- **Return 2xx quickly.** Do slow work asynchronously, or Stripe will time out and retry.\n- **Don't rely on ordering.** For example, `payment_intent.succeeded` can arrive before `checkout.session.completed`. Make handlers tolerate that, or re-fetch current state from the Stripe API.\n- **Verify the signature** (`Stripe-Signature`) before doing anything.\n- **Outgoing calls are a separate matter.** If your code calls Stripe to create charges or refunds, pass Stripe's `Idempotency-Key` header on those requests too."
+  },
+  {
+    "style": "default",
+    "prompt": "debug",
+    "run": 0,
+    "words": 215,
+    "first_line": true,
+    "next_move": false,
+    "glosses": 1,
+    "cost": 0.061826400000000004,
+    "text": "**Just re-run the job.** `ECONNRESET` during `npm ci` is almost always a transient network failure, not a problem with your commit. The same commit passed an hour ago, which points to the same conclusion.\n\n**If the re-run fails too:**\n\n1. **Check the registry status.** Look at status.npmjs.org, or at your private registry's status if you use one (Artifactory, Verdaccio, GitHub Packages).\n2. **Check your runner.** A single flaky self-hosted runner or a regional outage on hosted runners can cause this. Try another runner or region.\n3. **Add retries to the install step.** For example:\n   ```\n   npm config set fetch-retries 5\n   npm config set fetch-retry-mintimeout 20000\n   npm config set fetch-retry-maxtimeout 120000\n   npm ci\n   ```\n   You can also wrap the step in a retry action or loop.\n4. **Cache dependencies.** `actions/setup-node` with `cache: npm` cuts registry traffic, so a registry blip hurts less.\n5. **Look for network-side causes.** These include a proxy, a firewall, a rate limit, or an expired registry token. If it fails repeatedly, the log will usually show a 401, 403 or 429 before the reset.\n\n**Don't** change the lockfile or bump dependencies to \"fix\" this. Nothing in the code changed, so the code isn't the cause.\n\nIf it keeps failing, paste the CI log around the error and I can narrow it down."
+  },
+  {
+    "style": "Concise",
+    "prompt": "decide",
+    "run": 0,
+    "words": 149,
+    "first_line": true,
+    "next_move": false,
+    "glosses": 1,
+    "cost": 0.0638873,
+    "text": "**Shard first, unless install time is a big chunk of the 14 minutes.**\n\nCaching `node_modules` (or the package manager's download cache) usually saves 1-3 minutes, because it only speeds up install. Four shards can cut the test portion to about a quarter. That's likely 14 minutes down to 5-6.\n\nCheck the job log for where the time goes:\n- **Install takes under 3 minutes and tests take 10 or more:** shard first.\n- **Install takes 5 minutes or more:** cache first. It's about 5 lines of config.\n\nCaching also pays off more after sharding, since each of the 4 jobs repeats the install. Do both eventually, and cache the package manager's store (`~/.npm`, or the pnpm/yarn store) rather than `node_modules` itself.\n\nWhen you shard, split by timing rather than file count if your runner supports it (Jest `--shard`, Playwright `--shard`, or a timing-based splitter). That keeps the shards balanced."
+  },
+  {
+    "style": "Concise",
+    "prompt": "terms",
+    "run": 0,
+    "words": 327,
+    "first_line": true,
+    "next_move": false,
+    "glosses": 4,
+    "cost": 0.0665833,
+    "text": "An idempotency key is a unique identifier attached to an operation so that repeating it, through a retry or a duplicate delivery, has the same effect as running it once. The server records the key and its result, and a second request with the same key is skipped or gets the stored result back.\n\n**Yes, your handler needs one.** Stripe delivers webhooks at least once, so you will get duplicates from retries after timeouts or non-2xx responses, and sometimes when your 2xx was slow. Events can also arrive out of order. Without protection you can insert the same order twice.\n\n**Use the Stripe event ID (`evt_...`) as the key.** You can also key on a business identifier like the Checkout session ID or PaymentIntent ID. Enforce it in Postgres, not in application code:\n\n```sql\nCREATE TABLE processed_events (\n  event_id text PRIMARY KEY,\n  processed_at timestamptz NOT NULL DEFAULT now()\n);\n```\n\n```sql\nBEGIN;\nINSERT INTO processed_events (event_id) VALUES ($1) ON CONFLICT DO NOTHING;\n-- if 0 rows inserted: duplicate, ROLLBACK and return 200\nINSERT INTO orders (...) VALUES (...);\nCOMMIT;\n```\n\n- **One transaction:** The dedupe insert and the order write must share a transaction. Otherwise a crash between them either loses the order or leaves a permanent skip marker.\n- **Alternative:** Put a unique constraint on `orders.stripe_payment_intent_id` (or the session ID) and use `INSERT ... ON CONFLICT DO NOTHING`. This is simpler if each event maps to exactly one order row.\n- **Check-then-insert:** A `SELECT` followed by an `INSERT` is racy, because two concurrent deliveries can both pass the check. The unique constraint closes that gap.\n- **Response:** Return 2xx for duplicates so Stripe stops retrying.\n- **Ordering:** Don't assume ordering. Fetch current state from the Stripe API, or compare `created` timestamps, when it matters.\n\nSeparately, when you call Stripe's API to create charges or payment intents, pass Stripe's own `Idempotency-Key` header. That is the other direction, outbound requests, and it prevents double charges on client retries."
+  },
+  {
+    "style": "Concise",
+    "prompt": "debug",
+    "run": 0,
+    "words": 139,
+    "first_line": true,
+    "next_move": false,
+    "glosses": 0,
+    "cost": 0.0621913,
+    "text": "Re-run the job. `ECONNRESET` during `npm ci` is a transient network failure between the runner and the registry. A commit that passed an hour ago and has no changes points to that, not to your code.\n\nIf it fails again:\n\n- **Check the registry's status page** (status.npmjs.org, or your private registry's) for an incident.\n- **Add retries** to make CI resilient:\n  ```\n  npm ci --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000\n  ```\n- **Cache `~/.npm`** (e.g. `actions/setup-node` with `cache: npm`). Cached packages skip the network, so a blip hurts less.\n- **If it keeps failing on one runner or region**, suspect the runner's network, a proxy, or a registry mirror. Try a different runner.\n\nDon't change the lockfile or code until a re-run fails the same way. A different error on re-run, such as an integrity mismatch or `E404`, is a separate problem."
+  },
+  {
+    "style": "focus-kit:Reader-first",
+    "prompt": "decide",
+    "run": 0,
+    "words": 152,
+    "first_line": true,
+    "next_move": true,
+    "glosses": 0,
+    "cost": 0.0572795,
+    "text": "Shard first, unless your job log shows install taking more than about 3 of the 14 minutes. I haven't seen your CI logs, so this rests on typical numbers.\n\n- **Caching `node_modules`** usually saves 1–3 minutes, because it only skips the install step. It's a small change to set up and easy to undo.\n- **4 shards** attack the test run itself. If tests take about 11 of the 14 minutes, the job drops to roughly 4–5 minutes. Expect a bit more than 11/4, because each shard repeats setup.\n- **Cost:** sharding uses 4 runners, so CI minutes go up. Cache the install in the same change so each shard doesn't repeat it.\n- **Check first:** look at the per-step timings in your latest CI run. It takes 30 seconds and settles the question.\n\nYour move: tell me the install step's duration, or share the job log, and I'll confirm the order."
+  },
+  {
+    "style": "focus-kit:Reader-first",
+    "prompt": "terms",
+    "run": 0,
+    "words": 227,
+    "first_line": true,
+    "next_move": true,
+    "glosses": 3,
+    "cost": 0.056402,
+    "text": "An idempotency key is a unique ID attached to a request so that repeating it (retry, duplicate delivery) has the same effect as running it once. Yes, your Stripe webhook handler needs one.\n\n**Why it needs one:**\n- Stripe delivers webhooks at-least-once (duplicates are possible). It retries on any non-2xx response or timeout, so the same event can arrive twice.\n- Without protection, a retry inserts a duplicate order.\n\n**The key to use:** `event.id` (Stripe's unique ID per event, like `evt_...`). You can also key on the business object, such as `checkout.session.id` or `payment_intent.id`.\n\n**How to do it in Postgres:**\n- Add a `UNIQUE` constraint on that ID (on the orders table, or a separate `processed_events` table).\n- Insert with `INSERT ... ON CONFLICT DO NOTHING`.\n- Do the dedupe insert and the order write in one transaction, so a crash can't record the event without the order.\n- Return 200 on duplicates so Stripe stops retrying.\n\n**Don't rely on:** an \"does this order exist?\" check before inserting. Two concurrent deliveries can both pass it (a race condition). Only the unique constraint is safe.\n\nNote: Stripe's own `Idempotency-Key` header is a different thing. It protects your outgoing API calls to Stripe, not incoming webhooks.\n\nYour move: add a unique constraint on the Stripe event or object ID, and say if you want the migration and handler sketched."
+  },
+  {
+    "style": "focus-kit:Reader-first",
+    "prompt": "debug",
+    "run": 0,
+    "words": 141,
+    "first_line": true,
+    "next_move": true,
+    "glosses": 1,
+    "cost": 0.0545032,
+    "text": "Re-run the job first: `ECONNRESET` (connection dropped mid-download) on a commit that passed an hour ago is almost always a transient registry or network blip, not your code.\n\n- **Re-run only the failed job.** Don't change anything yet.\n- **If it fails again,** check the npm status page (status.npmjs.org) and your CI provider's status page for an incident.\n- **If it keeps flaking,** add retries to the install step:\n  - `npm ci --fetch-retries=5 --fetch-retry-mintimeout=20000`\n  - or set `npm config set fetch-retries 5` before it runs.\n- **Also worth adding:** cache `~/.npm` between runs, so fewer packages hit the network.\n\nRule out a real cause only if the re-run fails the same way: look for a changed lockfile, a registry URL or proxy setting, or a new private-package token.\n\nYour move: re-run the failed job and tell me if it fails again."
+  }
+]
