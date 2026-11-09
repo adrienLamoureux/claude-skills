@@ -23,11 +23,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3",
-            "args": [
-              "${CLAUDE_PLUGIN_ROOT}/scripts/focus_tool.py",
-              "on-write"
-            ],
+            "command": "input=$(cat); case \"$input\" in *'/resume.md\"'*) printf '%s' \"$input\" | python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/focus_tool.py\" on-write;; esac; exit 0",
             "timeout": 10
           }
         ]

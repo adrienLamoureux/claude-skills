@@ -385,7 +385,7 @@ def size(path: Path, run_dir: Path, factor: float) -> int:
         i += 1
         if added.isdigit() and deleted.isdigit():
             lines[name] = int(added) + int(deleted)
-    untracked = git("ls-files", "--others", "--exclude-standard", "-z")
+    untracked = git("-C", str(root), "ls-files", "--others", "--exclude-standard", "-z")
     for name in filter(None, untracked.stdout.split("\0")):
         lines.setdefault(name, line_count(root / name))
     owners = [(s["id"], [glob_regex(p) for p in s.get("owns", [])]) for s in manifest["slices"]]

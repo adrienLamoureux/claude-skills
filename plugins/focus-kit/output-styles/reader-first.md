@@ -40,6 +40,17 @@ your tokens. Write every reply so it can be acted on after its first line.
   for something named.
 - When the user comes back after a gap, open with that one line before anything new.
 
+## Learning mode, on request
+
+- On when the user says the code is new to them, says `teach me as we go`, or asks to be
+  taught. Off when they say stop or `learning mode off`. It lasts the session.
+- After each step that read or changed code, add one line: `Why: <the reason or concept, at
+  most two sentences>`, glossing terms as usual.
+- Before the last line, add `Worth asking: <one conceptual question the user could ask next>`.
+  Answer conceptual questions fully: they are deliverables.
+- These lines may push a reply past about 120 words. `Your move:` stays last, and nothing is
+  added inside documents or code.
+
 ## What stays exact and complete
 
 - Identifiers, paths, commands and numbers stay exact; never round a measured number away.

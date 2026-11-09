@@ -91,12 +91,20 @@ between sessions, without losing their understanding of the code (research and o
 - [x] `max_lines` per slice and `plan_tool.py size`; the checker reports, the reviewer flags.
 - [x] `/focus-kit:explain` and a personal vocabulary handed to Claude at session start.
 - [x] Pacing line past three open runs; one campaign checkpoint per round.
-- [x] `## In plain words` in plans, reviews and briefs; opt-in `Explanatory` style for new code.
+- [x] `## In plain words` in plans, reviews and briefs; `Reader-first` learning mode on request (`Explanatory` without focus-kit).
 - [x] Acronym check in `check_docs.py`; `/focus-kit:inbox page` (static runs page).
 - [x] No command needed: `Reader-first` sets `force-for-plugin` (verified headless); a
       `PostToolUse` hook rebuilds the runs page when a run's `resume.md` is written (verified
       headless); finished runs stop asking after 7 days; explain and dismiss trigger on plain
       words.
+- [x] Review fixes: inbox shows blocked campaigns despite an outcome, shows dev-kit fixes in
+      progress, reads verdict lines in any form, and decides "finished" by pattern; status line
+      cached 3 minutes and Write hook guarded in shell; `size` counts untracked files from a
+      subdirectory; Reader-first learning mode on request; one `stop-blocks.md` per kit.
+      Planned, implemented and approved through dev-kit (`cognitive-load-review-fixes`); its two
+      should-fix items followed: `dismiss` clears the status-line cache and rebuilds the page, and
+      a failed cache delete no longer stops the Write hook.
+      Fixtures: `prototypes/focus-kit-trial/check_focus_tool.py` (14 cases), `check_plan_size.py`.
 - [ ] Seeded-bug trial: does `## Where to look` point at a planted bug in 4 of 5 runs
       (`prototypes/ai-sdlc/trial.sh` with a bug in the fixture)?
 - [ ] Measure words a human reads per ticket before and after, from trial transcripts.

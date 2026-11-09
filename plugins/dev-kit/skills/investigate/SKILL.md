@@ -9,6 +9,8 @@ effort: medium
 
 Investigation first, fix second. Nothing in this skill edits tracked files.
 
+`<plan-skill-dir>` is the sibling `plan` skill folder: the base directory shown when this skill loads, with `investigate` replaced by `plan`.
+
 ## Agents and effort
 
 | Role | `subagent_type` | Model | Effort |
@@ -37,35 +39,11 @@ The escalation is the only time a dev-kit skill passes `model` to the Agent tool
    - fix it: `/dev-kit:plan` with `<DIR>/investigation.md` as the ticket. A one-file fix with
      high confidence can be planned at size S.
 
-## Resume block
+## Resume block and decision card
 
-At every stop (done, waiting for the user, or blocked), write `<DIR>/resume.md` yourself,
-replacing the old one, so a later session and the focus-kit inbox know where the run stands:
-
-```
-# Resume — <slug>
-- Where: <step, e.g. investigate · done>
-- Did: <one line: what this turn finished>
-- Needs: <what the user must do or decide, or nothing>
-```
-
-Show it only when the stop has no decision card; the card already says what is needed.
-
-## Decision card
-
-Every stop that waits for the user's choice ends with these five lines, then the question.
-One decision per card; a progress note that needs no answer gets no card.
-
-```
-Decide: <the choice, in one line>
-Recommend: <option> — <one reason>
-If wrong: <what breaks and when it would show; name the top unverified risk>
-Undo cost: <none, nothing written yet | revert the branch | re-run round n | one-way: why>
-On "ok": <exactly what happens next if the user just says ok>
-```
-
-The undo cost tells the user where to spend attention: a cheap undo needs a glance, a one-way
-step needs a read. Never hide a risk to make the card shorter.
+Before your first stop, read `<plan-skill-dir>/references/stop-blocks.md` and follow it: at every stop write `<DIR>/resume.md`,
+and end every stop that waits for the user's choice with its five-line decision card.
+Where examples for this skill: investigate · done
 
 ## Rules
 

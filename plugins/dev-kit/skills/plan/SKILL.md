@@ -67,41 +67,19 @@ sets it. Pass `effort` exactly as this table says for the ticket size.
    `/goal Run /dev-kit:implement <slug>, then /dev-kit:review <slug>; on changes-required run
    /dev-kit:implement <slug> fix and review again. Done when a review shows verdict approve or
    blocked, after two fix cycles, or when dev-kit stops on a blocker or a question for me.`
-   If the user said this code is new to them, add one line: the built-in `Explanatory`
-   output style (`/config`) adds short insights while they follow the work, at some output
-   cost, and `review.md` will explain the change in plain words.
+   If the user said this code is new to them, add one line: with focus-kit installed, they can
+   say "teach me as we go" to turn on Reader-first's learning mode (a short why after each
+   step, and a conceptual question worth asking); without focus-kit, the built-in `Explanatory`
+   output style (`/config`) adds short insights at some output cost. Either way `review.md`
+   will explain the change in plain words.
    On requested edits, send them to the planner (SendMessage if it is still addressable, else
    a new launch with the current plan as input) and repeat steps 4-5.
 
-## Resume block
+## Resume block and decision card
 
-At every stop (done, waiting for the user, or blocked), write `<DIR>/resume.md` yourself,
-replacing the old one, so a later session and the focus-kit inbox know where the run stands:
-
-```
-# Resume — <slug>
-- Where: <step, e.g. plan · ready, implement · blocked, review · approve>
-- Did: <one line: what this turn finished>
-- Needs: <what the user must do or decide, or nothing>
-```
-
-Show it only when the stop has no decision card; the card already says what is needed.
-
-## Decision card
-
-Every stop that waits for the user's choice ends with these five lines, then the question.
-One decision per card; a progress note that needs no answer gets no card.
-
-```
-Decide: <the choice, in one line>
-Recommend: <option> — <one reason>
-If wrong: <what breaks and when it would show; name the top unverified risk>
-Undo cost: <none, nothing written yet | revert the branch | re-run round n | one-way: why>
-On "ok": <exactly what happens next if the user just says ok>
-```
-
-The undo cost tells the user where to spend attention: a cheap undo needs a glance, a one-way
-step needs a read. Never hide a risk to make the card shorter.
+Before your first stop, read `<skill-dir>/references/stop-blocks.md` and follow it: at every stop write `<DIR>/resume.md`,
+and end every stop that waits for the user's choice with its five-line decision card.
+Where examples for this skill: plan · ready, implement · blocked, review · approve
 
 ## Rules
 

@@ -74,35 +74,11 @@ one implementer per affected slice with the findings as its brief (effort `high`
 A `blocked` verdict goes back to `/dev-kit:plan`, not here. After two review → fix cycles on
 the same plan, stop and hand the decision to the user with a decision card.
 
-## Resume block
+## Resume block and decision card
 
-At every stop (done, waiting for the user, or blocked), write `<DIR>/resume.md` yourself,
-replacing the old one, so a later session and the focus-kit inbox know where the run stands:
-
-```
-# Resume — <slug>
-- Where: <step, e.g. plan · ready, implement · blocked, review · approve>
-- Did: <one line: what this turn finished>
-- Needs: <what the user must do or decide, or nothing>
-```
-
-Show it only when the stop has no decision card; the card already says what is needed.
-
-## Decision card
-
-Every stop that waits for the user's choice ends with these five lines, then the question.
-One decision per card; a progress note that needs no answer gets no card.
-
-```
-Decide: <the choice, in one line>
-Recommend: <option> — <one reason>
-If wrong: <what breaks and when it would show; name the top unverified risk>
-Undo cost: <none, nothing written yet | revert the branch | re-run round n | one-way: why>
-On "ok": <exactly what happens next if the user just says ok>
-```
-
-The undo cost tells the user where to spend attention: a cheap undo needs a glance, a one-way
-step needs a read. Never hide a risk to make the card shorter.
+Before your first stop, read `<plan-skill-dir>/references/stop-blocks.md` and follow it: at every stop write `<DIR>/resume.md`,
+and end every stop that waits for the user's choice with its five-line decision card.
+Where examples for this skill: plan · ready, implement · blocked, review · approve
 
 ## Rules
 

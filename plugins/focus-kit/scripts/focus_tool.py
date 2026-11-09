@@ -15,7 +15,9 @@
 
   focus_tool.py statusline
       Status-line segment: reads Claude Code's status-line JSON on stdin and prints
-      "focus: N waiting" for that project, or nothing.
+      "focus: N waiting" for that project, or nothing. The count is cached for 3 minutes in
+      statusline.json (in focus-kit's own folder, below), so a refresh does not walk the runs
+      or start git; the SessionStart hook refreshes it and a run's resume.md write clears it.
 
   focus_tool.py vocab list | add <term> ... | remove <term> ...
       The terms you already know, kept in ~/.claude/focus-kit/vocabulary.md (or the file in
@@ -32,7 +34,9 @@
 
   focus_tool.py on-write
       PostToolUse hook for Write and Edit: when the file written is a run's resume.md, remember
-      that repository and rebuild the runs page. Silent; does nothing for any other file.
+      that repository, clear the status-line cache and rebuild the runs page. Silent; does
+      nothing for any other file. hooks.json starts Python only when the payload mentions
+      "/resume.md" (a shell guard), so ordinary writes cost no Python start.
 
   focus_tool.py dismiss <run-dir>
       Mark a run as needing nothing (writes "Needs: nothing" to its resume.md), e.g. after you
@@ -76,6 +80,11 @@ VOCAB_HEADER = ("# Vocabulary\n\nTerms I already know: Claude skips their gloss.
                 "Edit freely, one '- term' per line.\n\n")
 VOCAB_LIMIT = 400           # terms handed to Claude at session start
 FIELD = re.compile(r"^\s*-\s*(Where|Did|Needs|Next)\s*:\s*(.*)$", re.I)
+VERDICT_WORD = re.compile(
+    r"(?<![\w-])(changes-required|approved?|blocked|passed|pass|failed|fail)(?![\w-])", re.I)
+VERDICT_MAP = {"approved": "approve", "passed": "pass", "failed": "fail"}
+STATUS_CACHE = BASE / "statusline.json"   # {"<resolved start dir>": {"at": epoch, "waiting": int}}
+STATUS_TTL = 180                          # seconds; older entries are recomputed
 
 
 # ---------------------------------------------------------------- helpers
@@ -94,12 +103,25 @@ def manifest(path: Path, kind: str) -> dict | None:
 
 
 def verdict(path: Path) -> str | None:
-    """First word after '## Verdict' in a dev-kit review.md or check report."""
+    """Verdict of a dev-kit review.md or check report, from its '## Verdict' heading.
+
+    Looks on the heading line (after an optional ':', '—' or '-'), then on the first non-empty
+    line below it, for a known verdict word; falls back to that line's first word.
+    """
     if not path.exists():
         return None
     text = path.read_text(encoding="utf-8", errors="replace")
-    match = re.search(r"^##\s+Verdict\s*\n+\s*`?([a-z-]+)", text, re.M | re.I)
-    return match.group(1).lower() if match else None
+    head = re.search(r"^#{2,3}[ \t]+Verdict\b[ \t]*[:—-]?[ \t]*(.*)$", text, re.M | re.I)
+    if not head:
+        return None
+    first = next((ln for ln in text[head.end():].splitlines() if ln.strip()), "")
+    for candidate in (head.group(1), first):
+        match = VERDICT_WORD.search(candidate)
+        if match:
+            word = match.group(1).lower()
+            return VERDICT_MAP.get(word, word)
+    fallback = re.search(r"[a-z-]+", first, re.I)
+    return fallback.group(0).lower() if fallback else None
 
 
 def newest(run: Path, skip: str | None = None) -> float:
@@ -156,6 +178,10 @@ def dev_state(run: Path, slug: str) -> tuple[str, str]:
     plan = manifest(run / "plan.md", "plan")
     if review.exists() and not (integration.exists()
                                 and integration.stat().st_mtime > review.stat().st_mtime):
+        review_time = review.stat().st_mtime
+        if any(f.stat().st_mtime > review_time for pattern in ("slices/*.md", "checks/wave-*.md")
+               for f in run.glob(pattern)):
+            return "implement · fix in progress", ""
         v = verdict(review)
         if v == "approve":
             return "review · approve", "read Where to look in review.md, then commit"
@@ -181,6 +207,15 @@ def dev_state(run: Path, slug: str) -> tuple[str, str]:
 
 def campaign_state(run: Path, slug: str) -> tuple[str, str]:
     """(where, needs) for a campaign-kit run folder, from its files."""
+    numbers = sorted(int(p.name) for p in (run / "rounds").glob("*") if p.name.isdigit())
+    n = numbers[-1] if numbers else 0
+    rdir = run / "rounds" / str(n)
+    review = manifest(rdir / "review.md", "review") if numbers else None
+    if review:  # a blocked question outranks a finished-looking outcome.md
+        asks = review.get("needs_user") or []
+        if asks or review.get("verdict") == "stop-blocked":
+            first = asks[0] if asks else review.get("reason", "see the review")
+            return f"round {n} · {review.get('verdict')}", f"answer: {first}"
     if (run / "outcome.md").exists() or (run / "report.md").exists():
         return "done", "read Where to look in outcome.md, then keep or drop the work"
     brief = manifest(run / "brief.md", "brief")
@@ -188,17 +223,8 @@ def campaign_state(run: Path, slug: str) -> tuple[str, str]:
         return "interview", ""
     if brief.get("approved") is not True:
         return "brief · ready", "approve or edit the brief"
-    numbers = sorted(int(p.name) for p in (run / "rounds").glob("*") if p.name.isdigit())
     if not numbers:
         return "round 1 · planning", ""
-    n = numbers[-1]
-    rdir = run / "rounds" / str(n)
-    review = manifest(rdir / "review.md", "review")
-    if review:
-        asks = review.get("needs_user") or []
-        if asks or review.get("verdict") == "stop-blocked":
-            first = asks[0] if asks else review.get("reason", "see the review")
-            return f"round {n} · {review.get('verdict')}", f"answer: {first}"
     plan = manifest(rdir / "plan.md", "round")
     if plan and plan.get("approved") is not True and n > 1:
         prev = manifest(run / "rounds" / str(n - 1) / "review.md", "review") or {}
@@ -207,6 +233,16 @@ def campaign_state(run: Path, slug: str) -> tuple[str, str]:
                                                     and autonomy != "unattended"):
             return f"round {n} · plan ready", f"approve round {n}"
     return f"round {n} · running", ""
+
+
+def is_finished(where: str, run: Path, kit: str) -> bool:
+    """True when a run's Where text, or its files, say the work is done and approved."""
+    text = re.sub(r"[^a-z0-9]+", " ", where.lower()).strip()
+    if text == "done" or text.startswith("done ") or re.match(r"review approved?\b", text):
+        return True
+    if kit == "dev-kit":
+        return dev_state(run, run.name)[0] == "review · approve"
+    return campaign_state(run, run.name)[0].startswith("done")
 
 
 def run_entry(run: Path, kit: str, now: float) -> dict:
@@ -222,7 +258,7 @@ def run_entry(run: Path, kit: str, now: float) -> dict:
     else:
         where, needs = (dev_state if kit == "dev-kit" else campaign_state)(run, slug)
         did, since = "", latest
-    finished = where.startswith("done") or where == "review · approve"
+    finished = is_finished(where, run, kit)
     if finished and needs and now - since > DONE_QUIET_DAYS * 86400:
         needs = ""  # nobody acted on it for a week: stop asking
     if (not needs and not explicit_nothing and not finished
@@ -252,6 +288,45 @@ def collect(extra: list[str], everything: bool, start: Path | None = None) -> li
                 if everything or entry["needs"]:
                     entries.append(entry)
     return sorted(entries, key=lambda e: e["since"])
+
+
+def _cache_load() -> dict:
+    try:
+        data = json.loads(STATUS_CACHE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def status_cache_get(start: Path) -> int | None:
+    """Cached waiting count for a start dir, or None when missing or older than STATUS_TTL."""
+    try:
+        entry = _cache_load()[str(start.resolve())]
+        at, waiting = float(entry["at"]), int(entry["waiting"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    return waiting if 0 <= time.time() - at <= STATUS_TTL else None
+
+
+def status_cache_put(start: Path, waiting: int) -> None:
+    """Record the waiting count for a start dir. Never raises: the status line must not fail."""
+    try:
+        data = _cache_load()
+        data[str(start.resolve())] = {"at": time.time(), "waiting": waiting}
+        STATUS_CACHE.parent.mkdir(parents=True, exist_ok=True)
+        tmp = STATUS_CACHE.with_name(f"{STATUS_CACHE.name}.{os.getpid()}.tmp")
+        tmp.write_text(json.dumps(data), encoding="utf-8")
+        os.replace(tmp, STATUS_CACHE)
+    except (OSError, ValueError):
+        pass
+
+
+def status_cache_clear() -> None:
+    """Drop every cached count after a run's state changed. Never raises: callers go on."""
+    try:
+        STATUS_CACHE.unlink(missing_ok=True)
+    except OSError:
+        pass
 
 
 def line(entry: dict, many_roots: bool) -> str:
@@ -449,6 +524,7 @@ def cmd_on_write() -> int:
     path = (payload.get("tool_input") or {}).get("file_path") or ""
     if not path.endswith("/" + RESUME):
         return 0
+    status_cache_clear()  # a run's state changed: recount at the next refresh
     run = Path(path)
     if not run.is_absolute():
         run = Path(payload.get("cwd") or Path.cwd()) / run
@@ -490,6 +566,7 @@ def cmd_hook() -> int:
         payload = {}
     start = Path(payload.get("cwd") or Path.cwd())
     entries = collect([], False, start)
+    status_cache_put(start, sum(1 for e in entries if e["needs"]))
     for root in {e["root"] for e in entries}:
         remember_root(Path(root))
     auto_page()
@@ -522,7 +599,10 @@ def cmd_statusline() -> int:
     workspace = payload.get("workspace") or {}
     start = Path(workspace.get("project_dir") or payload.get("cwd") or Path.cwd())
     if start.is_dir():
-        waiting = sum(1 for e in collect([], False, start) if e["needs"])
+        waiting = status_cache_get(start)
+        if waiting is None:
+            waiting = sum(1 for e in collect([], False, start) if e["needs"])
+            status_cache_put(start, waiting)
         if waiting:
             print(f"focus: {waiting} waiting")
     return 0
@@ -539,6 +619,9 @@ def cmd_dismiss(args: list[str]) -> int:
     did = fields.get("did") or "dismissed from the focus-kit inbox"
     path.write_text(f"# Resume — {run.name}\n- Where: {where}\n- Did: {did}\n- Needs: nothing\n",
                     encoding="utf-8")
+    # Written here, not through the Write tool, so no hook sees it: refresh what the hooks would.
+    status_cache_clear()
+    auto_page()
     print(json.dumps({"ok": True, "dismissed": str(path)}))
     return 0
 

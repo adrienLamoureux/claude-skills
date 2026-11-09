@@ -67,10 +67,13 @@ conceptual questions scored highest. dev-kit keeps a small, cheap loop of unders
 - `plan.md` opens with `## In plain words` (problem, change, main risk) and the plan summary
   starts with it; `review.md` has its own (what changed, how it works now, one thing worth
   remembering), shown with the verdict on `approve`.
-- For code that is new to you, opt in to the built-in `Explanatory` output style (short
-  insights as Claude works) or `Learning` (Claude asks you to write small pieces), in
-  `/config` → Output style. Both cost more output tokens, and they shape the main session's
-  replies, not the agents' work. A new session may be needed for the switch to apply.
+- For code that is new to you: with focus-kit installed, say "teach me as we go" to turn on
+  Reader-first's learning mode (a short `Why:` after each step and a conceptual question worth
+  asking). focus-kit forces its style, so `/config` output styles do not apply. Without
+  focus-kit, opt in to the built-in `Explanatory` output style (short insights as Claude
+  works) or `Learning` (Claude asks you to write small pieces), in `/config` → Output style.
+  Both cost more output tokens, and they shape the main session's replies, not the agents'
+  work. A new session may be needed for the switch to apply.
 - With focus-kit installed, `/focus-kit:explain <term>` or `/focus-kit:explain last` on demand.
 
 ## Run folder

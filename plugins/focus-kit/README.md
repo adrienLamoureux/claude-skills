@@ -31,7 +31,11 @@ documents or code you ask for come in full.
 
 - It is on in every session once focus-kit is installed: the style sets `force-for-plugin: true`,
   which overrides your `outputStyle` setting. To use another style, disable focus-kit
-  (`claude plugin disable focus-kit@adrien-skills`).
+  (`claude plugin disable focus-kit@adrien-skills`). Because it is forced, `/config` styles such
+  as `Explanatory` are unavailable while focus-kit is on.
+- Learning mode, on request: say `teach me as we go` (or that the code is new to you) and each
+  step gets a short `Why:` line plus a `Worth asking:` question, for the rest of the session.
+  Say `learning mode off` to stop.
 - Its name is `focus-kit:Reader-first` (a plugin style is `<plugin>:<style>`).
 - It sets `keep-coding-instructions: true`, so Claude Code's coding instructions stay on.
 - Claude Code reads style files when a session starts: changes apply to the next session.
@@ -71,7 +75,9 @@ did, what it needs from you. The inbox lists every run that needs something, old
   "command": "python3 /path/to/focus-kit/scripts/focus_tool.py statusline" } }
 ```
 
-It prints `focus: N waiting`, or nothing. To keep an existing status line, call both from one
+It prints `focus: N waiting`, or nothing. The count is cached up to 3 minutes in
+`statusline.json` under `FOCUS_KIT_HOME` (default `~/.claude/focus-kit`); session start refreshes
+it, and a run's `resume.md` write clears it. To keep an existing status line, call both from one
 script and pass the same stdin to each.
 
 ## Explain on demand and your vocabulary
