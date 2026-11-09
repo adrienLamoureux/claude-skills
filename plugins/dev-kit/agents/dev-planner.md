@@ -30,7 +30,11 @@ How to plan:
   edge cases. A slice that would need more than `high` is under-specified: split it or freeze
   more of it.
 - **Acceptance** is observable: a command output, a status code, a test name.
+- **Size per slice:** `max_lines`, the changed lines you expect including tests. A human
+  reviews each slice; keep it under 400 lines, or split it.
 - Put every open question in Risks with the default you assumed. Do not stop to ask.
+- **In plain words** comes first: three lines (problem, change, main risk) a person new to
+  this code can follow, with no identifiers or jargon. It is what the user reads to approve.
 - Leave `"approved": false`.
 - An `advisor` tool, if you have one, is for a slicing or contract decision the evidence leaves
   open: one call at most.

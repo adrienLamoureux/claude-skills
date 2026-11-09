@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Plan a software ticket before any code is written — plan.md with frozen contracts and path-owned slices, from a scout's repo map, approved by the user. Use when the user runs /dev-kit:plan, or asks to plan, break down, slice or scope a ticket, feature, issue or change before implementing it, especially one touching several areas. Not for open-ended goals measured over rounds (campaign-kit) or unexplained bugs (/dev-kit:investigate first).
+description: Plan a software ticket before any code is written — plan.md with frozen contracts and path-owned slices, from a scout's repo map, approved by the user. Use when the user runs /dev-kit:plan, or asks to plan, break down, slice or scope a ticket, feature, issue or change, or asks to build, implement or add a feature or a set of changes that touches more than one area of the codebase (plan it first). Not for a change inside one file or area, open-ended goals measured over rounds (campaign-kit) or unexplained bugs (/dev-kit:investigate first).
 argument-hint: "<ticket text | file | issue URL or #number> [size=S|M|L] [DIR=.dev-kit/<slug>]"
 effort: medium
 ---
@@ -44,7 +44,9 @@ sets it. Pass `effort` exactly as this table says for the ticket size.
    - If the ticket is ambiguous in a way that would change the slicing (which system, which
      behaviour), ask up to three questions in one AskUserQuestion call. Otherwise go on; the
      planner records assumptions as risks.
-   - Say the frame in one line: slug, size, folder.
+   - Say the frame in one line: slug, size, folder. When the user asked to build or implement
+     rather than to plan, add that dev-kit plans first and no code is written before their
+     approval.
 2. **Scout.** Launch `dev-kit:dev-scout` with the ticket, the repo root and
    `<DIR>/context.md` as its output path.
 3. **Plan.** Launch `dev-kit:dev-planner` with: the ticket text, `<DIR>/context.md`, the size,
@@ -54,17 +56,52 @@ sets it. Pass `effort` exactly as this table says for the ticket size.
 4. **Check.** Run `python3 <skill-dir>/scripts/plan_tool.py check <DIR>/plan.md` yourself. On
    errors, send them back to the same planner (SendMessage) once; if they persist, show them
    to the user.
-5. **Present** in at most 15 lines: problem in one sentence, frozen contracts by name, slices
-   by wave (id, owns, effort), integration gates, top risks and open questions with their
-   assumed defaults. Then ask for approval, edits, or a different size.
+5. **Present** in at most 15 lines: the plan's `## In plain words` lines as they are, frozen
+   contracts by name, slices
+   by wave (id, owns, effort, `max_lines`), integration gates, top risks and open questions with their
+   assumed defaults. End with a decision card (below): approve, edit or resize; its
+   undo cost is nothing written yet.
 6. **On approval**, run `python3 <skill-dir>/scripts/plan_tool.py approve <DIR>/plan.md` and
    give the next step: `/dev-kit:implement <slug>`. To run implement → review → fix
    unattended, the user can send this instead (a skill cannot set a goal itself):
    `/goal Run /dev-kit:implement <slug>, then /dev-kit:review <slug>; on changes-required run
    /dev-kit:implement <slug> fix and review again. Done when a review shows verdict approve or
    blocked, after two fix cycles, or when dev-kit stops on a blocker or a question for me.`
+   If the user said this code is new to them, add one line: the built-in `Explanatory`
+   output style (`/config`) adds short insights while they follow the work, at some output
+   cost, and `review.md` will explain the change in plain words.
    On requested edits, send them to the planner (SendMessage if it is still addressable, else
    a new launch with the current plan as input) and repeat steps 4-5.
+
+## Resume block
+
+At every stop (done, waiting for the user, or blocked), write `<DIR>/resume.md` yourself,
+replacing the old one, so a later session and the focus-kit inbox know where the run stands:
+
+```
+# Resume — <slug>
+- Where: <step, e.g. plan · ready, implement · blocked, review · approve>
+- Did: <one line: what this turn finished>
+- Needs: <what the user must do or decide, or nothing>
+```
+
+Show it only when the stop has no decision card; the card already says what is needed.
+
+## Decision card
+
+Every stop that waits for the user's choice ends with these five lines, then the question.
+One decision per card; a progress note that needs no answer gets no card.
+
+```
+Decide: <the choice, in one line>
+Recommend: <option> — <one reason>
+If wrong: <what breaks and when it would show; name the top unverified risk>
+Undo cost: <none, nothing written yet | revert the branch | re-run round n | one-way: why>
+On "ok": <exactly what happens next if the user just says ok>
+```
+
+The undo cost tells the user where to spend attention: a cheap undo needs a glance, a one-way
+step needs a read. Never hide a risk to make the card shorter.
 
 ## Rules
 
@@ -80,4 +117,5 @@ sets it. Pass `effort` exactly as this table says for the ticket size.
 - `references/plan-format.md` — the plan.md sections, the `json plan-manifest` block, sizing.
   The planner reads it; you need it only to size the ticket.
 - `scripts/plan_tool.py` — `check` (structure, manifest, path overlap between parallel slices,
-  waves), `approve`, and `branch`, `baseline` and `ownership` (used by implement and review).
+  waves, size budgets), `approve`, and `branch`, `baseline`, `ownership` and `size` (used by
+  implement and review).

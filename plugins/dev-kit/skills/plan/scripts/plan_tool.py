@@ -18,6 +18,13 @@
       HEAD), create and switch to a working branch, default dev-kit/<slug>, or switch to it if
       it already exists. On any other branch, stay. Never fetches, pushes or touches a remote.
 
+  plan_tool.py size <plan.md> <run-dir> [--factor F]
+      Changed lines per slice since <run-dir>/base.txt (added + deleted for tracked files, all
+      lines for untracked ones), against each slice's "max_lines" budget. Files already dirty
+      before the first wave (baseline-dirty.txt) and the run folder are left out. A slice over
+      max_lines x F (default 1.5) is listed in "over": a warning for the checker's report, not
+      a failure, so the exit code is 0 unless the tool itself fails.
+
   plan_tool.py baseline <plan.md> <run-dir>
       First run only: write <run-dir>/base.txt (HEAD) and <run-dir>/baseline-dirty.txt (files
       already changed before any slice ran). Later runs leave both untouched. Reports dirty
@@ -50,6 +57,9 @@ REQUIRED_SECTIONS = [
     "manifest",
 ]
 SIZES = {"S", "M", "L"}
+# A person reviews a diff well up to a few hundred changed lines; past this a slice should split.
+SLICE_LINES_CEILING = 400
+SIZE_FACTOR = 1.5
 IMPLEMENTER_EFFORTS = {"medium", "high"}
 SLICE_ID = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 # A slice report is slices/<id>.md, and Claude Code blocks a subagent's Write to
@@ -143,6 +153,18 @@ def check(path: Path) -> int:
         if not any(h.startswith(section) for h in headings):
             errors.append(f"missing section '## {section.title()}'")
 
+    plain = re.search(r"^##\s+In plain words\s*\n(.*?)(?=^##\s|\Z)", text, re.M | re.S | re.I)
+    if not plain:
+        warnings.append("no '## In plain words' section: add three jargon-free lines for the "
+                        "person approving the plan")
+    else:
+        body = [l for l in plain.group(1).splitlines() if l.strip()]
+        if len(body) > 3:
+            warnings.append(f"'## In plain words' has {len(body)} lines; keep it to three")
+        if "`" in plain.group(1):
+            warnings.append("'## In plain words' holds code names; keep them for the sections "
+                            "below")
+
     manifest, err = read_manifest(text)
     if err:
         errors.append(err)
@@ -168,6 +190,15 @@ def check(path: Path) -> int:
         for key in ("owns", "gates", "acceptance"):
             if not s.get(key):
                 errors.append(f"slice '{sid}' needs a non-empty '{key}' list")
+        budget = s.get("max_lines")
+        if budget is None:
+            warnings.append(f"slice '{sid}' has no 'max_lines' budget: the size check skips it")
+        elif not isinstance(budget, int) or isinstance(budget, bool) or budget <= 0:
+            errors.append(f"slice '{sid}' max_lines must be a positive integer")
+        elif budget > SLICE_LINES_CEILING:
+            warnings.append(f"slice '{sid}' expects {budget} changed lines (> "
+                            f"{SLICE_LINES_CEILING}): consider splitting it so a person can "
+                            "review it in one sitting")
         if s.get("effort") not in IMPLEMENTER_EFFORTS:
             errors.append(f"slice '{sid}' effort must be one of {sorted(IMPLEMENTER_EFFORTS)}")
         for dep in s.get("depends_on", []):
@@ -311,6 +342,73 @@ def ownership(path: Path, baseline: Path | None, ignore: list[str]) -> int:
     return emit({"ok": not unowned, "unowned": unowned, "by_slice": by_slice})
 
 
+# ---------------------------------------------------------------- size
+
+def line_count(path: Path) -> int:
+    try:
+        with path.open("rb") as handle:
+            data = handle.read()
+    except OSError:
+        return 0
+    if b"\0" in data[:8000]:
+        return 0  # binary: no lines to review
+    return data.count(b"\n") + (1 if data and not data.endswith(b"\n") else 0)
+
+
+def size(path: Path, run_dir: Path, factor: float) -> int:
+    manifest, err = read_manifest(path.read_text(encoding="utf-8"))
+    if err:
+        return emit({"ok": False, "errors": [err]})
+    root = repo_root()
+    base_file = run_dir / "base.txt"
+    if not base_file.exists():
+        return emit({"ok": False, "errors": [f"{base_file} is missing: run baseline first"]})
+    base = base_file.read_text().strip()
+    dirty_file = run_dir / "baseline-dirty.txt"
+    skip = {l.strip() for l in dirty_file.read_text().splitlines() if l.strip()} \
+        if dirty_file.exists() else set()
+    prefix = repo_prefix(run_dir)
+    numstat = git("diff", "--numstat", "-z", base)
+    if numstat.returncode != 0:
+        raise GitError(numstat.stderr.strip() or f"git diff {base} failed")
+    lines: dict[str, int] = {}
+    parts, i = numstat.stdout.split("\0"), 0
+    while i < len(parts):
+        entry = parts[i]
+        if not entry:
+            i += 1
+            continue
+        added, deleted, name = (entry.split("\t", 2) + ["", "", ""])[:3]
+        if not name:  # a rename: the next two fields are the old and the new path
+            name = parts[i + 2] if i + 2 < len(parts) else ""
+            i += 2
+        i += 1
+        if added.isdigit() and deleted.isdigit():
+            lines[name] = int(added) + int(deleted)
+    untracked = git("ls-files", "--others", "--exclude-standard", "-z")
+    for name in filter(None, untracked.stdout.split("\0")):
+        lines.setdefault(name, line_count(root / name))
+    owners = [(s["id"], [glob_regex(p) for p in s.get("owns", [])]) for s in manifest["slices"]]
+    by_slice = {s["id"]: {"lines": 0, "max_lines": s.get("max_lines"), "files": 0}
+                for s in manifest["slices"]}
+    for name, count in lines.items():
+        if name in skip or (prefix and name.startswith(prefix)):
+            continue
+        for sid, pats in owners:
+            if any(p.match(name) for p in pats):
+                by_slice[sid]["lines"] += count
+                by_slice[sid]["files"] += 1
+    over = []
+    for sid, row in by_slice.items():
+        budget = row["max_lines"]
+        if isinstance(budget, int) and budget > 0:
+            row["ratio"] = round(row["lines"] / budget, 2)
+            if row["lines"] > budget * factor:
+                over.append(f"{sid}: {row['lines']} changed lines, budget {budget} "
+                            f"({row['ratio']} x): review it in parts or split it next time")
+    return emit({"ok": True, "base": base, "factor": factor, "by_slice": by_slice, "over": over})
+
+
 # ---------------------------------------------------------------- emit / baseline
 
 def emit(payload: dict) -> int:
@@ -399,7 +497,8 @@ def main(argv: list[str]) -> int:
 
 
 def run(argv: list[str]) -> int:
-    if len(argv) < 2 or argv[0] not in {"check", "ownership", "approve", "baseline", "branch"}:
+    if len(argv) < 2 or argv[0] not in {"check", "ownership", "approve", "baseline", "branch",
+                                        "size"}:
         print(__doc__)
         return 2
     command, plan = argv[0], Path(argv[1])
@@ -413,6 +512,22 @@ def run(argv: list[str]) -> int:
             print(__doc__)
             return 2
         return branch(plan, rest[1] if rest else None)
+    if command == "size":
+        rest = argv[2:]
+        if not rest:
+            print(__doc__)
+            return 2
+        factor = SIZE_FACTOR
+        if len(rest) == 3 and rest[1] == "--factor":
+            try:
+                factor = float(rest[2])
+            except ValueError:
+                print(__doc__)
+                return 2
+        elif len(rest) != 1:
+            print(__doc__)
+            return 2
+        return size(plan, Path(rest[0]), factor)
     if command == "baseline":
         if len(argv) < 3:
             print(__doc__)

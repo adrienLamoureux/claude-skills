@@ -62,9 +62,15 @@ Write:
 3. The next round plan, as above, with `"approved": false`.
 4. On any stop verdict, or when the task says final: `outcome.md` (not `report.md`: Claude
    Code refuses a subagent's Write to `.md` files named `report*`, `summary*`, `findings*` or
-   `analysis*`) with `## Outcome` (each criterion baseline → final, met or not), `## Per lane`
-   (what was done), `## What did not work`, `## Open items`, and `## Next for the user`
-   (needs-human items first).
+   `analysis*`) with `## Outcome` (each criterion baseline → final, met or not),
+   `## Where to look`, `## Per lane` (what was done), `## Machine-checked`, `## What did not
+   work`, `## Open items`, and `## Next for the user` (needs-human items first).
+   - **Where to look:** 1-3 entries, riskiest first, each
+     `` `path` (lane) — <the question to answer by reading it> — <why no check can answer it> ``,
+     drawn from the checks' `## Needs human eyes` sections and your own reading. This is what
+     the user reads before keeping the work; if nothing needs a person, say why in one line.
+   - **Machine-checked:** what the user may skip: each criterion and how the checker measured
+     it, and the lane claims the checker reproduced.
 
 Run the check command before replying and fix every error it reports.
 
@@ -73,5 +79,5 @@ reason, and anything the user must decide. On a stop verdict or in final mode, e
 with the recap block exactly as the formats reference shows under `## recap.md` (heading plus
 at most eight lines, not counted in the 120 words), ready to save as is: outcome and rounds
 used, each criterion baseline → final, deliverables as paths, measured cost if any, top open
-items, the user's to-dos. Do not write `recap.md`; the orchestrator saves it. Your reply is all
+items, `Look at:` the first `## Where to look` entry, the user's to-dos. Do not write `recap.md`; the orchestrator saves it. Your reply is all
 the orchestrator sees.

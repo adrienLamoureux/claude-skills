@@ -1,7 +1,9 @@
 # Roadmap
 
 > Planned 2026-11-04. Updated 2026-11-05: the planned `sdlc-kit` shipped as the developer family
-> inside `dev-kit`, next to a new campaign family (`campaign-kit`).
+> inside `dev-kit`, next to a new campaign family (`campaign-kit`). Updated 2026-11-07: the nine
+> cognitive-load options (`docs/ai-sdlc/cognitive-load.md`) shipped across the kits and a new
+> `focus-kit`.
 
 ## Developer family (was: sdlc-kit) — `dev-kit` 1.1.0
 
@@ -70,6 +72,43 @@ research) run as a resumable ReAct loop with measurable done criteria.
       attempt even with failing cases in hand; otherwise leave it as documentation.
 - [ ] `/goal`: a long campaign (6+ lanes, 4+ rounds) where a turn is likely to end early.
 - [ ] Run the judge's "sharper Sonnet task first" rule on the escalate fixture with `--runs 3`.
+
+## Human attention — `focus-kit` 0.1.0, dev-kit 1.4.0, campaign-kit 0.4.0, docs-kit 1.1.0
+
+**Goal:** the person supervising the kits reads less, decides faster and loses less context
+between sessions, without losing their understanding of the code (research and options:
+`docs/ai-sdlc/cognitive-load.md`).
+
+- [x] Review map: `## Where to look` and `## Machine-checked` in dev-kit `review.md` and campaign
+      `outcome.md`; `## Needs human eyes` in campaign checks; a `Look at:` recap line.
+- [x] Decision card (`Decide`, `Recommend`, `If wrong`, `Undo cost`, `On "ok"`) at every gate of
+      both kits.
+- [x] `focus-kit:Reader-first` output style. Benchmark (Sonnet, 3 prompts, 1 run): 173 mean
+      words against 205 for `Concise` and 266 for the default; ends with the next move 3/3 against
+      0/3 (`prototypes/focus-kit-trial/RESULTS.md`, USD 0.55).
+- [x] `resume.md` at every stop; focus-kit inbox, `SessionStart` hook, status-line segment,
+      `dismiss`.
+- [x] `max_lines` per slice and `plan_tool.py size`; the checker reports, the reviewer flags.
+- [x] `/focus-kit:explain` and a personal vocabulary handed to Claude at session start.
+- [x] Pacing line past three open runs; one campaign checkpoint per round.
+- [x] `## In plain words` in plans, reviews and briefs; opt-in `Explanatory` style for new code.
+- [x] Acronym check in `check_docs.py`; `/focus-kit:inbox page` (static runs page).
+- [x] No command needed: `Reader-first` sets `force-for-plugin` (verified headless); a
+      `PostToolUse` hook rebuilds the runs page when a run's `resume.md` is written (verified
+      headless); finished runs stop asking after 7 days; explain and dismiss trigger on plain
+      words.
+- [ ] Seeded-bug trial: does `## Where to look` point at a planted bug in 4 of 5 runs
+      (`prototypes/ai-sdlc/trial.sh` with a bug in the fixture)?
+- [ ] Measure words a human reads per ticket before and after, from trial transcripts.
+- [ ] A/B: does a term in the vocabulary stop being glossed under `Reader-first`?
+- [ ] Re-run `bench_styles.py --runs 3`; tighten the style if replies stay above ~120 words.
+- [ ] Check that the `SessionStart` message shows in the desktop app and VS Code, not only the
+      CLI.
+- [ ] Run the focus-kit eval suite once and tune the skill descriptions.
+- [ ] Route coding tasks through dev-kit without the slash command. A repo `CLAUDE.md` rule and a
+      wider `plan` description (build, implement, add across areas) did not fire in 3 headless
+      probes (Sonnet, 3 turns, 1 run each, USD 0.30); eval cases `implement-multi-area-unplanned`
+      and `no-fire-one-file-edit` added. Hooks and subagent options are being tried next.
 
 ## Marketplace
 

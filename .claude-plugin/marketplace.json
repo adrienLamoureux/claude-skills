@@ -4,8 +4,8 @@
     "name": "Adrien Lamoureux"
   },
   "metadata": {
-    "description": "Adrien's Claude Code skills: developer (plan-and-execute) and campaign (ReAct) families, engineering docs, résumé tailoring, plus pinned picks from Anthropic.",
-    "version": "1.3.0"
+    "description": "Adrien's Claude Code skills: developer (plan-and-execute) and campaign (ReAct) families, attention and cognitive-load tools, engineering docs, résumé tailoring, plus pinned picks from Anthropic.",
+    "version": "1.4.0"
   },
   "plugins": [
     {
@@ -25,6 +25,12 @@
       "source": "./plugins/docs-kit",
       "description": "Archon twin docs: one fact base rendered as an HTML page for engineers and a Markdown file for coding agents.",
       "category": "documentation"
+    },
+    {
+      "name": "focus-kit",
+      "source": "./plugins/focus-kit",
+      "description": "Spend the human's attention where it matters: a reader-first output style, an inbox of runs waiting on you, explain-on-demand with a personal vocabulary, and a page of every run's state.",
+      "category": "productivity"
     },
     {
       "name": "career-kit",

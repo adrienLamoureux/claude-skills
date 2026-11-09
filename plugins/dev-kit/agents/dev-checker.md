@@ -21,7 +21,10 @@ Do this, in order, and record evidence for each:
 3. **Gates.** Run each gate command given, from the repo root, one at a time. Record the
    command, the exit code, and the last lines that show the result (a failing test name, an
    error message), never the full log.
-4. **Attribution.** For each failure, name the slice whose owned files it points at, or
+4. **Size**, when the task gives a size command: run it and record each slice's changed lines
+   against its `max_lines` budget. A slice in its `over` list is a warning for the reviewer
+   and the human, not a failure: it does not change the verdict.
+5. **Attribution.** For each failure, name the slice whose owned files it points at, or
    `unattributed` if you cannot tell.
 
 Do not edit any file except your report. Do not install dependencies unless a gate cannot run
@@ -35,7 +38,8 @@ Use Read, Grep and Glob, not `cat`, `grep`, `find` or `ls`; Write creates missin
 no `mkdir`.
 
 Write the report with `## Verdict` (`pass` or `fail`), `## Ownership`, `## Contract drift`,
-`## Gates` (a table: command, exit, evidence), `## Failures by slice`. Put failures and drift
+`## Gates` (a table: command, exit, evidence), `## Size` (when run: slice, lines, budget,
+ratio), `## Failures by slice`. Put failures and drift
 first; a long list of passes is noise.
 
 Reply with at most 80 words: verdict, failing gates with their slice, and any drift. Your reply

@@ -4,7 +4,7 @@ id: onboard-a-repo
 doc_type: onboarding
 summary: Every step to run dev-kit (plan, implement, review) on a repo, locally and from GitHub labels, with the pitfalls the first rollout hit and the repos onboarded so far.
 status: current
-updated: 2026-11-06
+updated: 2026-11-07
 audience: software engineers
 source_commit: 1934e45
 scope: [docs/ai-sdlc/templates/dev-kit.yml, plugins/dev-kit/, prototypes/ai-sdlc/]
@@ -131,6 +131,7 @@ html_twin: onboard-a-repo.html
 ## Change log
 - 2026-11-06 — First version. Workflow tested end to end on whisk-proto-gcp and merged in whisk-studio; starter `@claude` PRs closed; unused `ANTHROPIC_API_KEY` secrets deleted from both repos, leaving only `CLAUDE_CODE_OAUTH_TOKEN`; template added.
 - 2026-11-06 — dev-kit 1.3.0: orchestrating skills at `effort: medium`, checker and scout without `CLAUDE.md`, shorter descriptions, `/goal` and advisor guidance. The template is unchanged. `prototypes/ai-sdlc/trial.sh` on 1.3.0: all phases passed, verdict `approve`, USD 0.84 against 0.78 on 1.2.1 at the same whisk-proto-gcp commit (one run each, so within run-to-run noise).
+- 2026-11-07 — dev-kit 1.4.0: plans open with `## In plain words` and give each slice a `max_lines` budget; `plan_tool.py size` reports slices over budget; `review.md` adds `## In plain words`, `## Where to look` and `## Machine-checked`; every stop writes `.dev-kit/<slug>/resume.md` and ends with a decision card. The template is unchanged: its allow-lists already cover `Write(.dev-kit/**)` and `plan_tool.py` (`docs/ai-sdlc/templates/dev-kit.yml:92`).
 - 2026-11-06 — whisk-studio pilot PRs #6 (backend route split and tests) and #7 (TypeScript start) merged; in PR #8 the nightly live eval and weekly drift check are gated off by default (`ENABLE_NIGHTLY_EVAL`, `ENABLE_DRIFT_CHECK`); `docs/ai-sdlc/scheduled-checks.md` added.
 
 ## Open questions

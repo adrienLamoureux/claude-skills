@@ -38,25 +38,60 @@ Do not pass `model`. Pass `effort` as above unless the user gave `effort=`.
 2. **Fresh evidence.** If `<DIR>/checks/integration.md` is missing or older than the newest
    change in the tree, launch `dev-kit:dev-checker` with scope `integration`, the manifest's
    `integration_gates`, the ownership command
-   `TOOL ownership <DIR>/plan.md --baseline <DIR>/baseline-dirty.txt --ignore <DIR>/`, and
-   report path `<DIR>/checks/integration.md`. Reviewers judge evidence; stale evidence
+   `TOOL ownership <DIR>/plan.md --baseline <DIR>/baseline-dirty.txt --ignore <DIR>/`, the
+   size command `TOOL size <DIR>/plan.md <DIR>`, and report path
+   `<DIR>/checks/integration.md`. Reviewers judge evidence; stale evidence
    produces confident wrong verdicts.
 3. **Judge.** Launch `dev-kit:dev-reviewer` with: the plan path, `DIR`, the base commit, the
    ownership command, and `<DIR>/review.md` as its output path.
 4. **Recap.** The reviewer's reply ends with a recap block: `# Recap — <slug>`, then at most
    eight lines (ticket and size · verdict; slices done · gates passed or failed, naming the
    failures; files changed, count then first paths; up to three must-fix as `path:line`,
-   problem, slice; the next step). Check it against `TOOL check` (slices),
+   problem, slice; `Look at:` the first entry of `review.md`'s `## Where to look`; the next
+   step). Check it against `TOOL check` (slices),
    `<DIR>/checks/integration.md` (gates) and the ownership command's `by_slice` (files), and
    correct anything that disagrees; with no block, build it from those and `review.md`. Write
    it yourself, not through an agent, to `<DIR>/recap.md` (each cycle replaces it), and show it
    as your relay, plus one line with the should-fix count and residual risks if any.
-5. **Route:**
-   - `approve` → done. Offer to commit (the user decides; `/commit` from commit-commands works
-     well) and mention the run folder can be deleted.
+5. **Route** with a decision card (below) for the verdict's next step:
+   - `approve` → done. Show `review.md`'s `## In plain words` and `## Where to look` as they
+     are (at most six lines): that is what the user reads before committing, and `## Machine-checked` is what
+     they may skip. Then offer to commit (the user decides; `/commit` from commit-commands
+     works well) and mention the run folder can be deleted. The card's `On "ok"` is
+     nothing: dev-kit never commits.
    - `changes-required` → offer `/dev-kit:implement <slug> fix`, then review again. After two
      such cycles, stop and let the user decide.
    - `blocked` → the plan is wrong; offer `/dev-kit:plan` with review.md as input.
+
+## Resume block
+
+At every stop (done, waiting for the user, or blocked), write `<DIR>/resume.md` yourself,
+replacing the old one, so a later session and the focus-kit inbox know where the run stands:
+
+```
+# Resume — <slug>
+- Where: <step, e.g. plan · ready, implement · blocked, review · approve>
+- Did: <one line: what this turn finished>
+- Needs: <what the user must do or decide, or nothing>
+```
+
+Show it only when the stop has no decision card; the card already says what is needed.
+
+## Decision card
+
+Every stop that waits for the user's choice ends with these five lines, then the question.
+One decision per card; a progress note that needs no answer gets no card.
+
+```
+Decide: <the choice, in one line>
+Recommend: <option> — <one reason>
+If wrong: <what breaks and when it would show; name the top unverified risk>
+Undo cost: <none, nothing written yet | revert the branch | re-run round n | one-way: why>
+On "ok": <exactly what happens next if the user just says ok>
+```
+
+The undo cost tells the user where to spend attention: a cheap undo needs a glance, a one-way
+step needs a read. Never hide a risk to make the card shorter.
 
 ## Rules
 

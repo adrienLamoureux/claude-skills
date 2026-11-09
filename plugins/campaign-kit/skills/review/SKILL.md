@@ -55,10 +55,11 @@ so routine rounds stay cheap.
    anything the user must decide or do.
 4. **Checkpoint.** `TOOL next <DIR>` again:
    - `approve-round` with `needs_user: true` (a pivot, or autonomy `checkpoint-each-round`) →
-     ask the user to approve the next round; on yes, `TOOL approve <DIR> round <n>`.
+     ask the user with a decision card (below) to approve the next round; on yes,
+     `TOOL approve <DIR> round <n>`.
    - `approve-round` with `needs_user: false` → approve it and say so.
    - `done` → step 5 first. Then, with `final: stop-blocked`, put each `needs_user` item from
-     the review manifest to the user, one question each; once resolved, the campaign
+     the review manifest to the user, one decision card each; once resolved, the campaign
      continues with a new round plan (judge) or a brief change (interview). Otherwise offer
      to publish a status page if the project-artifact plugin is installed.
 5. **Recap.** The judge's reply ends with a recap block (`## recap.md` in `FORMATS`, at most
@@ -67,6 +68,36 @@ so routine rounds stay cheap.
    that disagrees. If the reply has no block, build it from those two. Write it yourself, not
    through an agent, to the tool's `recap` path (`<DIR>/recap.md`, replacing an older one),
    and show it as is.
+
+## Resume block
+
+At every stop (done, waiting for the user, or blocked), write `<DIR>/resume.md` yourself,
+replacing the old one, so a later session and the focus-kit inbox know where the run stands:
+
+```
+# Resume — <slug>
+- Where: <step, e.g. brief · ready, round 2 · plan ready, round 3 · stop-blocked, done>
+- Did: <one line: what this turn finished>
+- Needs: <what the user must do or decide, or nothing>
+```
+
+Show it only when the stop has no decision card; the card already says what is needed.
+
+## Decision card
+
+Every stop that waits for the user's choice ends with these five lines, then the question.
+One decision per card; a progress note that needs no answer gets no card.
+
+```
+Decide: <the choice, in one line>
+Recommend: <option> — <one reason>
+If wrong: <what breaks and when it would show; name the top unverified risk>
+Undo cost: <none, nothing written yet | revert the branch | re-run round n | one-way: why>
+On "ok": <exactly what happens next if the user just says ok>
+```
+
+The undo cost tells the user where to spend attention: a cheap undo needs a glance, a one-way
+step needs a read. Never hide a risk to make the card shorter.
 
 ## Rules
 

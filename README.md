@@ -9,6 +9,7 @@ claude-skills/
 │  ├─ dev-kit/       developer family: plan → implement → review, investigate, pick-model
 │  ├─ campaign-kit/  campaign family: interview → execute lanes → review and iterate (ReAct)
 │  ├─ docs-kit/      skills/archon-document   twin HTML + MD engineering docs
+│  ├─ focus-kit/     attention: reader-first style, inbox, explain, runs page
 │  └─ career-kit/    skills/tailor-resume     truthful job-tailored résumés (resume-forge)
 ├─ template/my-skill/SKILL.md        start a new skill from here
 ├─ vendor/                           skills from others (see vendor/README.md)
@@ -101,6 +102,27 @@ advisor.
 - Agents write detail to files and reply in at most 80-150 words; the campaign checker carries
   its manifest format inline instead of reading `formats.md` every round.
 
+## The human side — `focus-kit`
+
+Agents scale; the person who reads, decides and checks does not. Both families are built to
+spend that attention well (research and options: `docs/ai-sdlc/cognitive-load.md`):
+
+- **Point, don't dump.** `review.md` and campaign `outcome.md` open with `## In plain words`
+  and `## Where to look` (at most three places that need a person, each with its question) and
+  list what was `## Machine-checked`, so the reader can skip it. The recap carries a `Look at:`
+  line.
+- **Decide on a card.** Every stop that needs you ends with five lines: `Decide`, `Recommend`,
+  `If wrong`, `Undo cost`, `On "ok"`.
+- **Small batches.** Each dev-kit slice has a `max_lines` budget; `plan_tool.py size` flags a
+  slice over 1.5 x its budget for the reviewer.
+- **Resume, don't rebuild.** Every stop writes `resume.md` (where, did, needs).
+
+`focus-kit` adds what works across runs and sessions, with no command to type: the
+`Reader-first` output style (on once installed), an inbox of the runs waiting on you (shown at
+session start), explanations and a personal vocabulary when you ask in your own words, pacing
+past three open runs, and a page of every run's state that hooks keep current. See
+`plugins/focus-kit/README.md`.
+
 ## Use it
 
 ```bash
@@ -108,6 +130,7 @@ claude plugin marketplace add adrienLamoureux/claude-skills   # from GitHub
 claude plugin marketplace add ./claude-skills                 # or a local checkout, for editing
 claude plugin install dev-kit@adrien-skills
 claude plugin install campaign-kit@adrien-skills
+claude plugin install focus-kit@adrien-skills
 ```
 
 With a local checkout added, edits load at the next session or after `/reload-plugins`.

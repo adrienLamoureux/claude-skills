@@ -11,6 +11,10 @@ slice and the contracts, so every section must stand on its own.
 
 > slug: <slug> · size: S|M|L · planned at <short sha> on <date>
 
+## In plain words
+Three lines a reader new to this code can follow: the problem, the change, the main risk.
+No identifiers, paths or jargon; the sections below carry the exact names.
+
 ## Problem
 Two to five sentences: what is wrong or missing, for whom, and what "done" looks like.
 
@@ -33,6 +37,7 @@ One sub-heading per slice: `### <id> — <title>`
 - **Acceptance:** observable checks (a test passes, an endpoint returns X, a command prints Y).
 - **Gates:** the commands that prove it, taken from the repo (see Gates).
 - **Effort:** `medium` (mechanical, pattern exists) or `high` (new logic, tricky edge cases).
+- **Size:** the changed lines you expect, tests included (`max_lines` in the manifest).
 
 ## Gates
 Where the repo declares its gates (AGENTS.md, CLAUDE.md, CONTRIBUTING.md, package scripts,
@@ -67,6 +72,7 @@ The fence info string must be exactly `json plan-manifest`:
       "owns": ["backend/lib/rate-limit.js", "backend/config/limits.js", "backend/test/rate-limit.test.js"],
       "depends_on": [],
       "effort": "high",
+      "max_lines": 180,
       "gates": ["npm --prefix backend test -- rate-limit"],
       "acceptance": ["6th login attempt within 60 s returns 429 with Retry-After"]
     },
@@ -76,6 +82,7 @@ The fence info string must be exactly `json plan-manifest`:
       "owns": ["backend/routes/auth.js"],
       "depends_on": ["backend-limiter"],
       "effort": "medium",
+      "max_lines": 40,
       "gates": ["npm --prefix backend test -- auth"],
       "acceptance": ["existing auth tests still pass"]
     }
@@ -92,6 +99,10 @@ Rules the checker enforces:
   Write to `.md` files named that way); `owns`, `gates`, `acceptance` are non-empty;
 - `effort` is `medium` or `high` (the implementer is a Sonnet agent; anything needing more
   thought than `high` is a planning problem: split the slice or freeze more of it);
+- `max_lines` is a positive integer: the changed lines (added + deleted, tests included) the
+  slice should take. Missing is a warning, and the size check then skips the slice; above
+  400 is a warning to split, because a person reviews a few hundred lines well and a
+  thousand badly. `plan_tool.py size` flags a slice that ends up over 1.5 x its budget;
 - `depends_on` names known slices, no cycles; `merge_order` lists every slice once, after its
   dependencies;
 - two slices with no dependency path between them run **in parallel in the same working

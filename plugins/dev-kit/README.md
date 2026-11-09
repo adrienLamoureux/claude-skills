@@ -58,6 +58,21 @@ attempt at a failing gate, the investigator once before settling a low-confidenc
 `investigate` does not relaunch on Opus), and the planner and reviewer at most once. See
 "With `/goal` and `/advisor`" in the repo README for the costs.
 
+## Keeping your picture of the code current
+
+Delegating everything costs understanding: in Anthropic's January 2026 study, developers who
+let AI write their code scored lowest on what they had built, and those who also asked
+conceptual questions scored highest. dev-kit keeps a small, cheap loop of understanding:
+
+- `plan.md` opens with `## In plain words` (problem, change, main risk) and the plan summary
+  starts with it; `review.md` has its own (what changed, how it works now, one thing worth
+  remembering), shown with the verdict on `approve`.
+- For code that is new to you, opt in to the built-in `Explanatory` output style (short
+  insights as Claude works) or `Learning` (Claude asks you to write small pieces), in
+  `/config` → Output style. Both cost more output tokens, and they shape the main session's
+  replies, not the agents' work. A new session may be needed for the switch to apply.
+- With focus-kit installed, `/focus-kit:explain <term>` or `/focus-kit:explain last` on demand.
+
 ## Run folder
 
 `.dev-kit/<slug>/` at the repo root (add it to `.gitignore`), or the folder given as `DIR=`,
@@ -71,8 +86,9 @@ which may also be outside the repository (a CI artifacts folder, say):
 | `slices/<id>.md` | implementers |
 | `checks/wave-<n>.md`, `checks/integration.md` | checker |
 | `review.md` | reviewer |
-| `recap.md` | the main session, from the reviewer's closing recap: a brief résumé of at most 8 lines (ticket and verdict, slices and gates, files changed, must-fix items, next step) |
+| `recap.md` | the main session, from the reviewer's closing recap: a brief résumé of at most 8 lines (ticket and verdict, slices and gates, files changed, must-fix items, where to look, next step) |
 | `investigation.md` | investigator |
+| `resume.md` | the main session, at every stop: where the run is, what it did, what it needs from you (read by focus-kit's inbox) |
 
 Claude Code refuses a sub-agent's Write to a `.md` file whose name starts with `report`,
 `summary`, `findings` or `analysis`, so no file above is named that way, and

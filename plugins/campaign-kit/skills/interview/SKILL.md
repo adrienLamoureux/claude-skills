@@ -59,8 +59,9 @@ Do not pass `model`.
 5. **Baseline.** Launch `campaign-kit:campaign-checker` in `baseline` mode with `DIR`. A
    criterion that comes back `unmeasurable` goes to the user now: fix its check, drop it, or
    accept it as judged qualitatively.
-6. **Present** in at most 15 lines: objective, each criterion as `baseline → target`, lanes,
-   guardrails, budget and autonomy, round-1 actions, assumptions. Ask for approval or edits.
+6. **Present** in at most 15 lines: the brief's `## In plain words` lines, objective, each criterion as `baseline → target`, lanes,
+   guardrails, budget and autonomy, round-1 actions, assumptions. End with a decision card
+   (below): approve or edit; its undo cost is nothing run yet.
 7. **On approval:** `TOOL approve <DIR> brief` and `TOOL approve <DIR> round 1`. Next step:
    `/campaign-kit:campaign <slug>` (runs the loop) or `/campaign-kit:execute <slug>` (one
    round at a time). With autonomy `unattended`, also give the user this line, which keeps the
@@ -68,6 +69,36 @@ Do not pass `model`.
    /campaign-kit:campaign <slug> until a "campaign <slug>:"
    status line says done, waiting for you, or blocked.`
    Edits go back to the strategist (SendMessage), then repeat 6.
+
+## Resume block
+
+At every stop (done, waiting for the user, or blocked), write `<DIR>/resume.md` yourself,
+replacing the old one, so a later session and the focus-kit inbox know where the run stands:
+
+```
+# Resume — <slug>
+- Where: <step, e.g. brief · ready, round 2 · plan ready, round 3 · stop-blocked, done>
+- Did: <one line: what this turn finished>
+- Needs: <what the user must do or decide, or nothing>
+```
+
+Show it only when the stop has no decision card; the card already says what is needed.
+
+## Decision card
+
+Every stop that waits for the user's choice ends with these five lines, then the question.
+One decision per card; a progress note that needs no answer gets no card.
+
+```
+Decide: <the choice, in one line>
+Recommend: <option> — <one reason>
+If wrong: <what breaks and when it would show; name the top unverified risk>
+Undo cost: <none, nothing written yet | revert the branch | re-run round n | one-way: why>
+On "ok": <exactly what happens next if the user just says ok>
+```
+
+The undo cost tells the user where to spend attention: a cheap undo needs a glance, a one-way
+step needs a read. Never hide a risk to make the card shorter.
 
 ## Rules
 

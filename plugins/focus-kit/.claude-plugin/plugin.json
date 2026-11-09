@@ -1,0 +1,9 @@
+{
+  "name": "focus-kit",
+  "description": "Spend the human's attention where it matters: a reader-first output style, an inbox of runs waiting on you, explain-on-demand with a personal vocabulary, and a page of every run's state.",
+  "version": "0.1.0",
+  "author": { "name": "Adrien Lamoureux" },
+  "repository": "https://github.com/adrienLamoureux/claude-skills",
+  "license": "MIT",
+  "keywords": ["cognitive-load", "attention", "output-style", "inbox", "glossary"]
+}
