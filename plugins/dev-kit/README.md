@@ -15,6 +15,35 @@ independent judge reviews the result against it.
 /dev-kit:pick-model <task>    model + effort routing advice
 ```
 
+## Routing without a slash command
+
+A hook (`hooks/route.py`) makes one routing decision per typed prompt, so you don't have to
+type the command:
+
+| The request reads as | What happens |
+|---|---|
+| a change inside one file or one area | nothing: Claude edits directly |
+| a change across two or more areas | Claude starts `/dev-kit:plan` and says in one line why; repo edits wait until the plan is approved |
+| a bug or unexplained behaviour | Claude starts `/dev-kit:investigate`; edits wait until it has run |
+| an objective measured over rounds | campaign-kit, if installed, proposes `/campaign-kit:campaign`; you decide |
+
+- **Areas.** Each folder under `plugins/`, `packages/`, `apps/`, `services/` or `src/` is an
+  area, and so is each other top-level folder. Root files and tests belong to no area.
+- **The second-area hold.** A direct edit that brings a task's edits to a second area is held
+  the same way. This catches follow-ups such as "continue" that carry no keywords.
+- **Lifting a hold.** Say it in your own words: "just edit it", "just fix it", "skip the
+  plan". Task notes and messages from other sessions cannot lift a hold.
+- **Never held:** dev-kit's own agents, files under `.dev-kit/`, and files outside the repo.
+- **When a plan lifts holds:** only while its run is live. That means it is approved, has no
+  `approve` or `blocked` review verdict yet, and was touched in the last 7 days.
+- **Switches.** `DEV_KIT_ROUTING=nudge` turns holds into notes, and `off` turns routing off.
+  `KIT_ROUTING` sets both kits.
+- **Cost:** about 110 tokens on a routed prompt (about 5% of prompts) and about 70 ms per
+  prompt and per edit.
+- **Known hole:** shell writes (`sed -i`, heredocs) are not held.
+
+Measurements and the mechanisms weighed: `prototypes/dev-kit-routing/RESULTS.md`.
+
 ## Install
 
 ```bash
@@ -114,6 +143,10 @@ workflows, package scripts, `Makefile`. A repo that states its gates in `AGENTS.
 - `investigate` never edits tracked files.
 
 ## Headless runs
+
+Routing: a prompt that starts with a slash command is never routed, so the label workflow
+(`docs/ai-sdlc/templates/dev-kit.yml`) is unaffected. A headless run with a free-text prompt
+has nobody to lift a hold, so set `KIT_ROUTING=nudge` (or `off`) in its environment.
 
 Under `claude -p --permission-mode dontAsk`, every tool call the allow-list does not name is
 denied, and nobody is there to approve it. Each part of a chained shell command must match a

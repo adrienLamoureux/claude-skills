@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "Adrien's Claude Code skills: developer (plan-and-execute) and campaign (ReAct) families, attention and cognitive-load tools, engineering docs, résumé tailoring, plus pinned picks from Anthropic.",
-    "version": "1.4.0"
+    "version": "1.5.0"
   },
   "plugins": [
     {

@@ -23,6 +23,19 @@ and measures again.
 | next Thought | the judge's verdict and next plan, `rounds/<n>/review.md` + `ledger.md` |
 | Final answer | the judge's final report on a stop verdict, `outcome.md`, and its brief résumé, `recap.md` |
 
+## Proposed without a slash command
+
+A hook (`hooks/route.py`, the same router as dev-kit's) reads each typed prompt. Some prompts
+read as an objective measured over rounds: raise coverage to 80%, cut p95 latency below
+50 ms, migrate all callers, clear the lint backlog. For those, Claude proposes
+`/campaign-kit:campaign` in one line, with the reason, and waits for you.
+
+- **Never started on its own.** campaign-kit runs only on your yes, and edits wait for your
+  answer that turn.
+- **To work directly**, say "no campaign".
+- **Switches.** `CAMPAIGN_KIT_ROUTING=nudge` makes it a note only, and `off` turns it off.
+  `KIT_ROUTING` sets both kits.
+
 ## Install
 
 ```bash
@@ -100,6 +113,10 @@ reach, skip the campaign: a plain `/goal <condition>` is cheaper.
 Trial results for both are in `prototypes/campaign-kit-trial/RESULTS.md` at the repo root.
 
 ## Headless runs
+
+Routing: a prompt that starts with a slash command is never routed. A headless run with a
+free-text objective has nobody to answer the proposal, so set `CAMPAIGN_KIT_ROUTING=off` (or
+`nudge`) in its environment.
 
 Under `claude -p --permission-mode dontAsk`, each part of a chained shell command must match an
 allow-list rule on its own. So every campaign-kit skill and agent runs one plain command per

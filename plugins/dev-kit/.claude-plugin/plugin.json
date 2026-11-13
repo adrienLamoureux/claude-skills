@@ -1,7 +1,7 @@
 {
   "name": "dev-kit",
   "description": "Developer family, plan-and-execute: plan, implement, review and investigate a ticket with Opus planning and judging and Sonnet executing and checking. Plus model and effort routing advice.",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "author": { "name": "Adrien Lamoureux" },
   "repository": "https://github.com/adrienLamoureux/claude-skills",
   "license": "MIT",
