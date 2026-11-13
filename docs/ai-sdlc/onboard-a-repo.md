@@ -4,9 +4,9 @@ id: onboard-a-repo
 doc_type: onboarding
 summary: Every step to run dev-kit (plan, implement, review) on a repo, locally and from GitHub labels, with the pitfalls the first rollout hit and the repos onboarded so far.
 status: current
-updated: 2026-11-07
+updated: 2026-11-13
 audience: software engineers
-source_commit: 1934e45
+source_commit: 45b1347
 scope: [docs/ai-sdlc/templates/dev-kit.yml, plugins/dev-kit/, prototypes/ai-sdlc/]
 tags: [ai-sdlc, onboarding, dev-kit, github-actions, claude-code-action, setup-token, plugins-ci, headless]
 aliases: [AI-SDLC setup, dev-kit workflow, GitHub Action setup, install-github-app, CLAUDE_CODE_OAUTH_TOKEN, label workflow, dev-kit labels]
@@ -102,6 +102,7 @@ html_twin: onboard-a-repo.html
 - `git -C <path> diff` is denied although `Bash(git diff:*)` is allowed — the rule matches the command as written. Seen once in the 1.3.0 trial; the reviewer went on with the checker's evidence. Fix: dev-kit 1.3.0 tells its agents not to prefix commands with `cd` or `git -C`.
 - GitHub rejects a workflow whose plain `run:` value contains `: ` — YAML reads it as a mapping. Fix: use `run: |`.
 - Re-running a failed run reuses the workflow file from the original commit. Fix: after changing the workflow, remove and re-add the label instead of re-running.
+- A headless run with a free-text prompt stops with "[dev-kit routing gate] … edits are held" — since dev-kit 1.5.0 a routed task waits for a human to lift the hold. The label workflow is unaffected: its prompts are slash commands, which are never routed, and it approves the plan before `/dev-kit:implement` (`docs/ai-sdlc/templates/dev-kit.yml:161-165`). Fix for other headless runs: set `KIT_ROUTING: off` (or `nudge`) in the step's `env`.
 
 ## Repos onboarded
 | Repo | Type | Local plugin | GitHub workflow | Last end-to-end run |
@@ -133,6 +134,7 @@ html_twin: onboard-a-repo.html
 - 2026-11-06 — dev-kit 1.3.0: orchestrating skills at `effort: medium`, checker and scout without `CLAUDE.md`, shorter descriptions, `/goal` and advisor guidance. The template is unchanged. `prototypes/ai-sdlc/trial.sh` on 1.3.0: all phases passed, verdict `approve`, USD 0.84 against 0.78 on 1.2.1 at the same whisk-proto-gcp commit (one run each, so within run-to-run noise).
 - 2026-11-07 — dev-kit 1.4.0: plans open with `## In plain words` and give each slice a `max_lines` budget; `plan_tool.py size` reports slices over budget; `review.md` adds `## In plain words`, `## Where to look` and `## Machine-checked`; every stop writes `.dev-kit/<slug>/resume.md` and ends with a decision card. The template is unchanged: its allow-lists already cover `Write(.dev-kit/**)` and `plan_tool.py` (`docs/ai-sdlc/templates/dev-kit.yml:92`).
 - 2026-11-06 — whisk-studio pilot PRs #6 (backend route split and tests) and #7 (TypeScript start) merged; in PR #8 the nightly live eval and weekly drift check are gated off by default (`ENABLE_NIGHTLY_EVAL`, `ENABLE_DRIFT_CHECK`); `docs/ai-sdlc/scheduled-checks.md` added.
+- 2026-11-13 — dev-kit 1.5.0 and campaign-kit 0.5.0: routing hooks (`plugins/dev-kit/hooks/route.py`) send a typed prompt to plan, investigate or a campaign proposal, and hold edits until the routed skill has run or the user says to edit directly. The template is unchanged; `KIT_ROUTING` turns routing off for other headless runs.
 
 ## Open questions
 - The whisk-studio workflow has not run yet [unverified].

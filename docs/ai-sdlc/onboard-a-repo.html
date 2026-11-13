@@ -721,7 +721,7 @@ a.ar-chip:hover { color: var(--ar-accent-ink); border-color: var(--ar-accent); }
       </div>
       <h1>Onboard a repo to the AI-SDLC (dev-kit)</h1>
       <p class="ar-summary">Every step to run dev-kit (plan, implement, review) on a repo, locally and from GitHub labels, with the pitfalls the first rollout hit and the repos onboarded so far.</p>
-      <div class="ar-meta"><span class="ar-chip is-current">current</span><span class="ar-chip">Updated 2026-11-07</span><span class="ar-chip">For software engineers</span><span class="ar-chip">Commit <code>1934e45</code></span><span class="ar-chip">~3 min read</span></div>
+      <div class="ar-meta"><span class="ar-chip is-current">current</span><span class="ar-chip">Updated 2026-11-13</span><span class="ar-chip">For software engineers</span><span class="ar-chip">Commit <code>45b1347</code></span><span class="ar-chip">~4 min read</span></div>
     </header>
     <details class="ar-toc-mobile">
       <summary>Contents</summary>
@@ -843,6 +843,7 @@ flowchart LR
       <tr><td>Fails in 2 s, output hidden</td><td>Set repo variable <code>DEV_KIT_DEBUG=true</code>, then delete it</td></tr>
       <tr><td>Stops after a denied <code>&amp;&amp;</code> command</td><td>dev-kit 1.2.1 or later</td></tr>
       <tr><td>Re-run ignores a workflow fix</td><td>Remove and re-add the label</td></tr>
+      <tr><td>Free-text headless run stops, edits held</td><td>Set <code>KIT_ROUTING=off</code> (or <code>nudge</code>) in the step's env</td></tr>
     </tbody>
   </table></div>
 </section>
@@ -881,9 +882,9 @@ flowchart LR
  "doc_type": "onboarding",
  "summary": "Every step to run dev-kit (plan, implement, review) on a repo, locally and from GitHub labels, with the pitfalls the first rollout hit and the repos onboarded so far.",
  "status": "current",
- "updated": "2026-11-07",
+ "updated": "2026-11-13",
  "audience": "software engineers",
- "source_commit": "1934e45",
+ "source_commit": "45b1347",
  "tags": [
   "ai-sdlc",
   "onboarding",

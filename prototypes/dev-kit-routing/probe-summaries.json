@@ -1,0 +1,713 @@
+[
+ {
+  "probe": "A-old",
+  "hook_context_events": [
+   "UserPromptSubmit",
+   "PreToolUse"
+  ],
+  "gate_denials": [],
+  "plan_skill_fired": false,
+  "num_turns": 17,
+  "cost_usd": 0.1406062,
+  "stop": "success",
+  "first_tools": [
+   "Glob:*.{js,jsx,ts,tsx,json,env*}",
+   "Grep:login",
+   "Read:app.js",
+   "Read:login.js"
+  ],
+  "edited_files": [
+   "LoginForm.jsx",
+   "api.md",
+   "app.js",
+   "config.js",
+   "rateLimit.js",
+   "rateLimit.test.js"
+  ],
+  "reply_excerpt": "I've added per-user rate limiting on `POST /login`, a countdown message in the login form, and per-environment config. I haven't run any of it, and I couldn't run the tests because I had no shell in this session. `npm test` should pick up the new `server/rateLimit.test.js`.\n\nThe hook suggested plann"
+ },
+ {
+  "probe": "A-on-2",
+  "hook_context_events": [
+   "UserPromptSubmit"
+  ],
+  "gate_denials": [],
+  "plan_skill_fired": true,
+  "num_turns": 7,
+  "cost_usd": 0.1164928,
+  "stop": "error_max_turns",
+  "first_tools": [
+   "Skill:dev-kit:plan",
+   "Glob:*",
+   "Read:login.js",
+   "Read:app.js"
+  ],
+  "edited_files": [
+   "plan.md",
+   "resume.md"
+  ],
+  "reply_excerpt": ""
+ },
+ {
+  "probe": "A-on-3",
+  "hook_context_events": [
+   "UserPromptSubmit",
+   "PreToolUse"
+  ],
+  "gate_denials": [],
+  "plan_skill_fired": false,
+  "num_turns": 12,
+  "cost_usd": 0.11535720000000001,
+  "stop": "success",
+  "first_tools": [
+   "Glob:*.{js,jsx,ts,tsx,json,env*}",
+   "Bash",
+   "Read:package.json",
+   "Read:config.js"
+  ],
+  "edited_files": [
+   "LoginForm.jsx",
+   "app.js",
+   "config.js",
+   "loginRateLimit.js"
+  ],
+  "reply_excerpt": "I implemented the rate limiting, the countdown message and the per-environment config, but none of it has been run or tested. This session has no shell, so I couldn't run `npm test` or start the app. I also didn't use `dev-kit:plan` and edited directly, since the change is small. The routing hook su"
+ },
+ {
+  "probe": "A-on",
+  "hook_context_events": [
+   "UserPromptSubmit",
+   "PreToolUse"
+  ],
+  "gate_denials": [],
+  "plan_skill_fired": true,
+  "num_turns": 17,
+  "cost_usd": 0.1727744,
+  "stop": "success",
+  "first_tools": [
+   "Skill:dev-kit:plan",
+   "Agent",
+   "Glob:*",
+   "Read:login.js"
+  ],
+  "edited_files": [
+   "LoginForm.jsx",
+   "api.md",
+   "config.js",
+   "login.js",
+   "rateLimit.js",
+   "rateLimit.test.js"
+  ],
+  "reply_excerpt": "I implemented the rate limiting directly, without a dev-kit plan, because the Agent tool is disabled here and the repo has only 5 small files. I couldn't run `npm test` because this session has no shell tool, so none of this has been run. That includes the new tests in `server/rateLimit.test.js`.\n\n*"
+ },
+ {
+  "probe": "A-opus",
+  "hook_context_events": [
+   "UserPromptSubmit"
+  ],
+  "gate_denials": [],
+  "plan_skill_fired": true,
+  "num_turns": 5,
+  "cost_usd": 0.1676106,
+  "stop": "success",
+  "first_tools": [
+   "Skill:dev-kit:plan",
+   "Glob:*",
+   "Write:resume.md"
+  ],
+  "edited_files": [
+   "resume.md"
+  ],
+  "reply_excerpt": "I haven't written any code or a plan yet. dev-kit plans before it writes code, and the planning step couldn't run in this session.\n\n**Frame:** the run is named `login-rate-limit` and sized M, because it touches three areas: the Express route, the environment config and the React form. Its folder is "
+ },
+ {
+  "probe": "B-off-2",
+  "hook_context_events": [],
+  "gate_denials": [],
+  "plan_skill_fired": false,
+  "num_turns": 12,
+  "cost_usd": 0.1292161,
+  "stop": "success",
+  "first_tools": [
+   "Glob:*.{js,jsx,ts,tsx,json,env*}",
+   "Read:app.js",
+   "Read:login.js",
+   "Read:config.js"
+  ],
+  "edited_files": [
+   "LoginForm.jsx",
+   "app.js",
+   "config.js",
+   "loginRateLimit.js",
+   "loginRateLimit.test.js"
+  ],
+  "reply_excerpt": "I implemented the rate limiting, the countdown message and the per-environment config. I haven't run any of it, because I had no shell in this session. `package.json` also doesn't list `express`, so `npm test` can't pass until it's installed.\n\n**Backend**\n- `server/middleware/loginRateLimit.js` is a"
+ },
+ {
+  "probe": "B-off-3",
+  "hook_context_events": [],
+  "gate_denials": [],
+  "plan_skill_fired": false,
+  "num_turns": 15,
+  "cost_usd": 0.13346899999999998,
+  "stop": "success",
+  "first_tools": [
+   "Glob:*.{js,jsx,ts,tsx,json,env*}",
+   "Grep:login",
+   "Read:login.js",
+   "Read:app.js"
+  ],
+  "edited_files": [
+   "LoginForm.jsx",
+   "app.js",
+   "config.js",
+   "login.js",
+   "loginLimiter.js",
+   "loginLimiter.test.js"
+  ],
+  "reply_excerpt": "I've added per-user rate limiting on `POST /login`, a countdown message in the login form, and per-environment config. I couldn't run anything here, so none of it has been run, including the new tests in `server/loginLimiter.test.js`. You can run them with `npm test`.\n\n**Backend**\n- **Limiter:** `se"
+ },
+ {
+  "probe": "B-off",
+  "hook_context_events": [],
+  "gate_denials": [],
+  "plan_skill_fired": false,
+  "num_turns": 15,
+  "cost_usd": 0.13771519999999998,
+  "stop": "success",
+  "first_tools": [
+   "Glob:*.{js,jsx,ts,tsx,json,env*}",
+   "Grep:login",
+   "Read:app.js",
+   "Read:login.js"
+  ],
+  "edited_files": [
+   "LoginForm.jsx",
+   "api.md",
+   "config.js",
+   "login.js",
+   "loginLimiter.js",
+   "loginLimiter.test.js"
+  ],
+  "reply_excerpt": "I've added per-user rate limiting on `POST /login`, a countdown message in the login form, and per-environment config. I couldn't run anything, because this session has no shell tool. `npm test` (which runs the new `server/loginLimiter.test.js`) is still to do, and so is a manual check of the form.\n"
+ },
+ {
+  "probe": "B-opus",
+  "hook_context_events": [],
+  "gate_denials": [],
+  "plan_skill_fired": true,
+  "num_turns": 4,
+  "cost_usd": 0.1512152,
+  "stop": "success",
+  "first_tools": [
+   "Skill:dev-kit:plan",
+   "Write:resume.md"
+  ],
+  "edited_files": [
+   "resume.md"
+  ],
+  "reply_excerpt": "I've only framed the ticket. Planning is blocked because this session doesn't have the tools the planning workflow needs:\n\n- **No Agent tool.** I can't launch the scout (`dev-kit:dev-scout`) to map the repo, or the planner (`dev-kit:dev-planner`) to write `plan.md`.\n- **No Bash tool.** I can't run `"
+ },
+ {
+  "probe": "C-rename",
+  "hook_context_events": [],
+  "gate_denials": [],
+  "plan_skill_fired": false,
+  "num_turns": 6,
+  "cost_usd": 0.0653401,
+  "stop": "success",
+  "first_tools": [
+   "Grep:TIMEOUT",
+   "Read:config.js",
+   "Edit:config.js",
+   "Edit:config.js"
+  ],
+  "edited_files": [
+   "config.js"
+  ],
+  "reply_excerpt": "I renamed `TIMEOUT` to `REQUEST_TIMEOUT_MS` in `src/config.js`: the declaration, the `setTimeout` call in `withTimeout`, and the `module.exports` entry. I didn't run anything.\n\nThe export is now `REQUEST_TIMEOUT_MS`, so any other file that imports `TIMEOUT` from this module will break. I only search"
+ },
+ {
+  "probe": "D-resume",
+  "hook_context_events": [
+   "UserPromptSubmit"
+  ],
+  "gate_denials": [],
+  "plan_skill_fired": false,
+  "num_turns": 5,
+  "cost_usd": 0.061829300000000004,
+  "stop": "success",
+  "first_tools": [
+   "Glob:*",
+   "Grep:React|Node|PostgreSQL|MongoDB",
+   "Read:resume.md",
+   "Edit:resume.md"
+  ],
+  "edited_files": [
+   "resume.md"
+  ],
+  "reply_excerpt": "I updated the Skills section of `resume.md`. I didn't run the dev-kit planning step, since this was a single-file edit.\n\n- Front-end: React, **Angular**, TypeScript\n- Back-end: Node.js, Express\n- Data: PostgreSQL, **DynamoDB**\n\nI put DynamoDB on the Data line because the resume has no separate back-"
+ },
+ {
+  "probe": "F-gate",
+  "hook_context_events": [],
+  "gate_denials": [
+   "PreToolUse",
+   "tool_result"
+  ],
+  "plan_skill_fired": false,
+  "num_turns": 6,
+  "cost_usd": 0.0652196,
+  "stop": "success",
+  "first_tools": [
+   "Grep:attempts",
+   "Edit:LoginForm.jsx",
+   "Edit:api.md",
+   "Edit:login.js"
+  ],
+  "edited_files": [
+   "LoginForm.jsx",
+   "api.md",
+   "login.js"
+  ],
+  "reply_excerpt": "I renamed `attempts` to `failedAttempts` in all three places it appeared. I didn't run any tests or the app.\n\n- `server/routes/login.js:6`: the 401 response now returns `failedAttempts: 1`.\n- `client/src/LoginForm.jsx:9`: the error message now reads `body.failedAttempts`.\n- `docs/api.md:3`: the docu"
+ },
+ {
+  "probe": "O-old-off-1",
+  "hook_context_events": [],
+  "gate_denials": [],
+  "plan_skill_fired": false,
+  "num_turns": 15,
+  "cost_usd": 0.30173459999999996,
+  "stop": "success",
+  "first_tools": [
+   "Glob:*",
+   "Read:login.js",
+   "Read:app.js",
+   "Read:config.js"
+  ],
+  "edited_files": [
+   "LoginForm.jsx",
+   "api.md",
+   "config.js",
+   "login.js",
+   "rateLimiter.js",
+   "rateLimiter.test.js"
+  ],
+  "reply_excerpt": "I've added per-user rate limiting to `POST /login`, a \"too many attempts\" message with a countdown in the login form, and a per-environment setting for the limit. **None of it has been run.** I had no shell in this session, so I couldn't run the new tests or start the app. Also, `express` isn't list"
+ },
+ {
+  "probe": "O-old-off-2",
+  "hook_context_events": [],
+  "gate_denials": [],
+  "plan_skill_fired": false,
+  "num_turns": 14,
+  "cost_usd": 0.28999579999999997,
+  "stop": "success",
+  "first_tools": [
+   "Glob:*",
+   "Read:login.js",
+   "Read:app.js",
+   "Read:config.js"
+  ],
+  "edited_files": [
+   "LoginForm.jsx",
+   "api.md",
+   "config.js",
+   "login.js",
+   "rateLimiter.js",
+   "rateLimiter.test.js"
+  ],
+  "reply_excerpt": "I've added per-user rate limiting to `POST /login`, a \"too many attempts\" countdown in the login form, and limits that can be set per environment. I had no shell in this session, so nothing has been run: neither the new tests nor the app.\n\n**How the limit works**\n- Only failed logins count, tracked "
+ },
+ {
+  "probe": "O-old-on-1",
+  "hook_context_events": [
+   "UserPromptSubmit",
+   "PreToolUse"
+  ],
+  "gate_denials": [],
+  "plan_skill_fired": true,
+  "num_turns": 7,
+  "cost_usd": 0.2635264,
+  "stop": "error_max_turns",
+  "first_tools": [
+   "Skill:dev-kit:plan",
+   "Glob:*",
+   "Read:login.js",
+   "Read:config.js"
+  ],
+  "edited_files": [
+   "LoginForm.jsx",
+   "api.md",
+   "config.js",
+   "login.js"
+  ],
+  "reply_excerpt": ""
+ },
+ {
+  "probe": "O-old-on-2",
+  "hook_context_events": [
+   "UserPromptSubmit",
+   "PreToolUse"
+  ],
+  "gate_denials": [],
+  "plan_skill_fired": false,
+  "num_turns": 15,
+  "cost_usd": 0.3151824,
+  "stop": "success",
+  "first_tools": [
+   "Glob:*",
+   "Read:resume.md",
+   "Read:login.js",
+   "Read:config.js"
+  ],
+  "edited_files": [
+   "LoginForm.jsx",
+   "api.md",
+   "config.js",
+   "login.js",
+   "loginLimiter.js",
+   "loginLimiter.test.js"
+  ],
+  "reply_excerpt": "I've added per-user rate limiting to `POST /login`, a \"too many attempts\" message with a countdown in the login form, and limits that can be set per environment. I haven't run anything: I had no shell, so the new tests haven't been run (`npm test` would do it) and the form hasn't been tried in a bro"
+ },
+ {
+  "probe": "O-wide-off-2",
+  "hook_context_events": [],
+  "gate_denials": [],
+  "plan_skill_fired": true,
+  "num_turns": 5,
+  "cost_usd": 0.1580164,
+  "stop": "success",
+  "first_tools": [
+   "Skill:dev-kit:plan",
+   "Glob:*",
+   "Write:resume.md"
+  ],
+  "edited_files": [
+   "resume.md"
+  ],
+  "reply_excerpt": "I couldn't do the planning step in this session, and no code has been written. dev-kit always writes a plan and gets your approval before it builds anything. It got stuck before it could write that plan.\n\n**How I scoped it:** I named the task `login-rate-limit` and sized it M, because it touches thr"
+ },
+ {
+  "probe": "O-wide-off-3",
+  "hook_context_events": [],
+  "gate_denials": [],
+  "plan_skill_fired": true,
+  "num_turns": 4,
+  "cost_usd": 0.1487122,
+  "stop": "success",
+  "first_tools": [
+   "Skill:dev-kit:plan",
+   "Write:resume.md"
+  ],
+  "edited_files": [
+   "resume.md"
+  ],
+  "reply_excerpt": "I didn't get past the framing step, so there is no plan yet and no code has been written. dev-kit always plans first and only writes code once you approve the plan.\n\n**Frame:** the slug is `login-rate-limit`. I sized it M because it touches three areas: the Express route, the React form and per-envi"
+ },
+ {
+  "probe": "I-off-1",
+  "hook_context_events": [],
+  "gate_denials": [],
+  "plan_skill_fired": false,
+  "kit_skills_fired": [],
+  "num_turns": 6,
+  "cost_usd": 0.06878160000000001,
+  "stop": "success",
+  "first_tools": [
+   "Grep:Login failed|attempts",
+   "Read:login.js",
+   "Read:LoginForm.jsx",
+   "Grep:express\\.(json|urlencoded)|body-parser|multer"
+  ],
+  "edited_files": [
+   "LoginForm.jsx"
+  ],
+  "reply_excerpt": "I fixed the login in `client/src/LoginForm.jsx`. I haven't run it or tested it.\n\n**Cause:** the form sent its fields as `FormData`, which goes out as multipart. The server (`server/app.js:5`) only has `express.json()`, so it never parsed the body. `req.body` was empty, `users[undefined]` was falsy, "
+ },
+ {
+  "probe": "I-off-2",
+  "hook_context_events": [],
+  "gate_denials": [],
+  "plan_skill_fired": false,
+  "kit_skills_fired": [],
+  "num_turns": 6,
+  "cost_usd": 0.06913960000000001,
+  "stop": "success",
+  "first_tools": [
+   "Grep:Login failed|attempts",
+   "Read:login.js",
+   "Read:LoginForm.jsx",
+   "Grep:express|json\\(|login"
+  ],
+  "edited_files": [
+   "LoginForm.jsx"
+  ],
+  "reply_excerpt": "I fixed the login in `client/src/LoginForm.jsx`. I haven't run it, so alice/secret is untested.\n\n**Cause:** the form posted `FormData`, which the browser sends as `multipart/form-data`. The server only has `express.json()` in `server/app.js`, so `req.body` came through empty. `user` and `password` w"
+ },
+ {
+  "probe": "I-on-1",
+  "hook_context_events": [
+   "UserPromptSubmit"
+  ],
+  "gate_denials": [],
+  "plan_skill_fired": false,
+  "kit_skills_fired": [],
+  "num_turns": 7,
+  "cost_usd": 0.0742498,
+  "stop": "success",
+  "first_tools": [
+   "Grep:Login failed",
+   "Read:LoginForm.jsx",
+   "Grep:attempts",
+   "Read:login.js"
+  ],
+  "edited_files": [
+   "LoginForm.jsx"
+  ],
+  "reply_excerpt": "I fixed the login in `client/src/LoginForm.jsx`. I haven't run it, so it's untested.\n\n**Cause:** the form sent its fields as `FormData`, which goes out as multipart. The server only has `express.json()` (`server/app.js:5`), which can't read multipart. So `req.body` was empty, `user` and `password` w"
+ },
+ {
+  "probe": "I-on-2",
+  "hook_context_events": [
+   "UserPromptSubmit"
+  ],
+  "gate_denials": [],
+  "plan_skill_fired": false,
+  "kit_skills_fired": [],
+  "num_turns": 5,
+  "cost_usd": 0.0664614,
+  "stop": "success",
+  "first_tools": [
+   "Grep:attempts",
+   "Read:login.js",
+   "Read:LoginForm.jsx",
+   "Edit:LoginForm.jsx"
+  ],
+  "edited_files": [
+   "LoginForm.jsx"
+  ],
+  "reply_excerpt": "I changed `client/src/LoginForm.jsx` so the login form sends JSON. I haven't run it, so I don't know yet that alice/secret now logs in.\n\n**Cause:** the form posted a `FormData` object, which the browser sends as `multipart/form-data`. The server's `/login` handler reads `req.body.user` and `req.body"
+ },
+ {
+  "probe": "I-opus-off",
+  "hook_context_events": [],
+  "gate_denials": [],
+  "plan_skill_fired": false,
+  "kit_skills_fired": [],
+  "num_turns": 7,
+  "cost_usd": 0.1424624,
+  "stop": "success",
+  "first_tools": [
+   "Grep:Login failed",
+   "Read:LoginForm.jsx",
+   "Glob:*.{js,jsx,ts,py}",
+   "Read:login.js"
+  ],
+  "edited_files": [
+   "LoginForm.jsx"
+  ],
+  "reply_excerpt": "I fixed the login form so alice/secret should work now, but I haven't run the app or any tests to confirm it.\n\n**Cause:** `client/src/LoginForm.jsx` sent the form as `FormData`, which the browser sends as `multipart/form-data`. The server (`server/app.js:5`) only reads JSON bodies (`express.json()`)"
+ },
+ {
+  "probe": "K-off-1",
+  "hook_context_events": [],
+  "gate_denials": [],
+  "plan_skill_fired": false,
+  "kit_skills_fired": [],
+  "num_turns": 9,
+  "cost_usd": 0.0791896,
+  "stop": "success",
+  "first_tools": [
+   "Glob:*",
+   "Glob:package.json",
+   "Read:package.json",
+   "Read:app.js"
+  ],
+  "edited_files": [
+   "login.test.js"
+  ],
+  "reply_excerpt": "I added server tests for the login handler, but I couldn't run them, and I did nothing for `client/`. Coverage is still unmeasured, and the 80% target for `server/` and `client/` isn't confirmed.\n\n**Done**\n- I added `server/routes/login.test.js`, using `node:test` to match the existing `npm test` sc"
+ },
+ {
+  "probe": "K-off-2",
+  "hook_context_events": [],
+  "gate_denials": [],
+  "plan_skill_fired": false,
+  "kit_skills_fired": [],
+  "num_turns": 10,
+  "cost_usd": 0.0820333,
+  "stop": "success",
+  "first_tools": [
+   "Glob:*",
+   "Glob:package.json",
+   "Read:package.json",
+   "Read:app.js"
+  ],
+  "edited_files": [
+   "login.test.js"
+  ],
+  "reply_excerpt": "I only got part of the way: I added tests for the login handler, but I couldn't run them or measure coverage. The server and client are not at 80%.\n\n**What I added**\n- `server/routes/login.test.js` has four `node:test` cases for `server/routes/login.js`:\n  - valid credentials\n  - wrong password\n  - "
+ },
+ {
+  "probe": "K-on-1",
+  "hook_context_events": [
+   "UserPromptSubmit"
+  ],
+  "gate_denials": [],
+  "plan_skill_fired": false,
+  "kit_skills_fired": [],
+  "num_turns": 8,
+  "cost_usd": 0.08666340000000002,
+  "stop": "success",
+  "first_tools": [
+   "Glob:*.{js,ts,tsx,jsx,json,py}",
+   "Read:app.js",
+   "Read:login.js",
+   "Read:LoginForm.jsx"
+  ],
+  "edited_files": [
+   "login.test.js"
+  ],
+  "reply_excerpt": "I wrote server tests for `login.js`, but I haven't run them, and I haven't reached 80% for `server/` or `client/`. I have no shell in this session, so I couldn't run anything or measure coverage.\n\n**What's done:** `server/routes/login.test.js` has four tests using `node:test` and a mock `res`. They "
+ },
+ {
+  "probe": "K-on-2",
+  "hook_context_events": [
+   "UserPromptSubmit"
+  ],
+  "gate_denials": [],
+  "plan_skill_fired": false,
+  "kit_skills_fired": [],
+  "num_turns": 9,
+  "cost_usd": 0.0861875,
+  "stop": "success",
+  "first_tools": [
+   "Glob:*.{js,ts,jsx,tsx,json,py}",
+   "Glob:*",
+   "Read:package.json",
+   "Read:app.js"
+  ],
+  "edited_files": [
+   "login.test.js"
+  ],
+  "reply_excerpt": "I added server tests, but I haven't reached 80% across both `server/` and `client/`, and I couldn't run anything.\n\n**What I added:** `server/routes/login.test.js` has four `node:test` cases for the login handler. They cover a valid login, a wrong password, an unknown user and a missing body. The han"
+ },
+ {
+  "probe": "K-opus-off",
+  "hook_context_events": [],
+  "gate_denials": [],
+  "plan_skill_fired": false,
+  "kit_skills_fired": [],
+  "num_turns": 8,
+  "cost_usd": 0.17530900000000002,
+  "stop": "success",
+  "first_tools": [
+   "Glob:*",
+   "Read:package.json",
+   "Read:resume.md",
+   "Read:app.js"
+  ],
+  "edited_files": [
+   "login.test.js"
+  ],
+  "reply_excerpt": "I didn't reach the 80% target. I covered only the server login handler and haven't run anything, so I can't give you a coverage number.\n\n**What I added:** `server/routes/login.test.js`, with four `node:test` cases for `server/routes/login.js`: correct credentials, wrong password, unknown user, and n"
+ },
+ {
+  "probe": "G-bug",
+  "hook_context_events": [
+   "UserPromptSubmit"
+  ],
+  "gate_denials": [
+   "PreToolUse",
+   "tool_result"
+  ],
+  "plan_skill_fired": false,
+  "kit_skills_fired": [],
+  "num_turns": 6,
+  "cost_usd": 0.073251,
+  "stop": "success",
+  "first_tools": [
+   "Grep:Login failed|attempts",
+   "Read:login.js",
+   "Read:LoginForm.jsx",
+   "Edit:LoginForm.jsx",
+   "Edit:LoginForm.jsx"
+  ],
+  "edited_files": [
+   "LoginForm.jsx"
+  ],
+  "reply_excerpt": "I changed `client/src/LoginForm.jsx` so the login form sends JSON, but I haven't run it, so the fix is untested.\n\n**Cause:** the form posted `FormData`, which goes out as a multipart body. The server's `/login` handler (`server/routes/login.js:4`) reads `user` and `password` from `req.body`, and `do"
+ },
+ {
+  "probe": "G-bug2",
+  "hook_context_events": [
+   "UserPromptSubmit"
+  ],
+  "gate_denials": [
+   "PreToolUse",
+   "tool_result"
+  ],
+  "plan_skill_fired": false,
+  "kit_skills_fired": [
+   "dev-kit:investigate"
+  ],
+  "num_turns": 7,
+  "cost_usd": 0.090829,
+  "stop": "error_max_turns",
+  "first_tools": [
+   "Grep:Login failed|attempts",
+   "Read:login.js",
+   "Read:LoginForm.jsx",
+   "Grep:express\\.(json|urlencoded)|multer|bodyParser",
+   "Edit:LoginForm.jsx",
+   "Skill:dev-kit:investigate"
+  ],
+  "edited_files": [
+   "LoginForm.jsx",
+   "investigation.md",
+   "resume.md"
+  ],
+  "reply_excerpt": ""
+ },
+ {
+  "probe": "G-camp",
+  "hook_context_events": [
+   "UserPromptSubmit"
+  ],
+  "gate_denials": [],
+  "plan_skill_fired": false,
+  "kit_skills_fired": [],
+  "num_turns": 1,
+  "cost_usd": 0.030483,
+  "stop": "success",
+  "first_tools": [],
+  "edited_files": [],
+  "reply_excerpt": "This looks like a goal measured over several rounds (coverage across both `server/` and `client/`), so I suggest running `/campaign-kit:campaign`. It would set up done criteria, per-package lanes and a budget. Do you want that, or should I just start adding tests directly?"
+ },
+ {
+  "probe": "G-plan",
+  "hook_context_events": [
+   "UserPromptSubmit"
+  ],
+  "gate_denials": [],
+  "plan_skill_fired": true,
+  "kit_skills_fired": [
+   "dev-kit:plan"
+  ],
+  "num_turns": 5,
+  "cost_usd": 0.0807623,
+  "stop": "success",
+  "first_tools": [
+   "Skill:dev-kit:plan",
+   "Agent",
+   "Write:resume.md"
+  ],
+  "edited_files": [
+   "resume.md"
+  ],
+  "reply_excerpt": "I couldn't produce a plan. The Agent tool is disabled in this session, and dev-kit needs it to launch the scout and planner. No code has been changed and there is no `plan.md`.\n\nWhat I did:\n- **Framing:** slug `login-rate-limit`, size M, run folder `.dev-kit/login-rate-limit/`.\n- **Resume note:** I "
+ }
+]

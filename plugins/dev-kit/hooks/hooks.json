@@ -1,0 +1,28 @@
+{
+  "description": "dev-kit routing: one decision per task. A multi-area build starts dev-kit:plan on its own (repo edits held until a plan is approved or the user says to edit directly); a bug starts dev-kit:investigate on its own (edits held until it has run or the user says to fix it directly); direct edits that reach a second area are held the same way. DEV_KIT_ROUTING=off|nudge|gate (default gate).",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/route.py\" --kit dev-kit",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|Agent|Task|Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/route.py\" --kit dev-kit",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

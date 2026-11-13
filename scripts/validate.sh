@@ -6,3 +6,5 @@ claude plugin validate "$ROOT"
 for plugin in "$ROOT"/plugins/*/; do
   claude plugin validate "$plugin"
 done
+# Kit routing hooks: unit tests, and dev-kit's and campaign-kit's route.py must stay identical.
+python3 "$ROOT/plugins/dev-kit/hooks/test_route.py" > /dev/null

@@ -3,7 +3,8 @@
 > Planned 2026-11-04. Updated 2026-11-05: the planned `sdlc-kit` shipped as the developer family
 > inside `dev-kit`, next to a new campaign family (`campaign-kit`). Updated 2026-11-07: the nine
 > cognitive-load options (`docs/ai-sdlc/cognitive-load.md`) shipped across the kits and a new
-> `focus-kit`.
+> `focus-kit`. Updated 2026-11-13: kit routing hooks shipped in dev-kit 1.5.0 and campaign-kit
+> 0.5.0, so coding tasks reach the kits without a slash command.
 
 ## Developer family (was: sdlc-kit) — `dev-kit` 1.1.0
 
@@ -113,10 +114,46 @@ between sessions, without losing their understanding of the code (research and o
 - [ ] Check that the `SessionStart` message shows in the desktop app and VS Code, not only the
       CLI.
 - [ ] Run the focus-kit eval suite once and tune the skill descriptions.
-- [ ] Route coding tasks through dev-kit without the slash command. A repo `CLAUDE.md` rule and a
+- [x] Route coding tasks through dev-kit without the slash command. A repo `CLAUDE.md` rule and a
       wider `plan` description (build, implement, add across areas) did not fire in 3 headless
       probes (Sonnet, 3 turns, 1 run each, USD 0.30); eval cases `implement-multi-area-unplanned`
-      and `no-fire-one-file-edit` added. Hooks and subagent options are being tried next.
+      and `no-fire-one-file-edit` added. Shipped as hooks: see `## Kit routing` below.
+
+## Kit routing — dev-kit 1.5.0, campaign-kit 0.5.0
+
+**Goal:** one routing decision per coding task, with no slash command:
+- direct edit (one area);
+- `/dev-kit:plan` (multi-area: starts on its own);
+- `/dev-kit:investigate` (bug: starts on its own);
+- `/campaign-kit:campaign` (objective over rounds: proposed, never started).
+
+Research, ranked mechanisms and measurements: `prototypes/dev-kit-routing/RESULTS.md`.
+
+- [x] `hooks/route.py`, an identical copy in both kits (`scripts/validate.sh` runs
+      `plugins/dev-kit/hooks/test_route.py`, which fails if the copies drift). It works in
+      three steps:
+  - a `UserPromptSubmit` keyword router records the task's route and adds a one-line note;
+  - `PreToolUse` holds Edit and Write until the routed skill has run (plan: until it is
+    approved) or the user says "just edit it" / "just fix it" / "no campaign";
+  - a direct edit that brings a task's edits to a second area is held the same way, and a
+    multi-area hand-off to a non-kit subagent is held once.
+- [x] Only typed prompts lift a hold; task notes and other sessions' messages do not. Kit
+      agents, `.dev-kit/` and `.campaign-kit/` are never held. A plan lifts holds only while
+      its run is live: approved, no `approve` or `blocked` verdict, touched in 7 days.
+- [x] Modes `gate` (default), `nudge` (notes only) and `off`, set with `KIT_ROUTING`,
+      `DEV_KIT_ROUTING` or `CAMPAIGN_KIT_ROUTING`. Slash-command prompts are never routed, so the
+      label workflow is unaffected.
+- [x] Measured (Sonnet, one run per route): plan started first with no code written;
+      investigate started after one held edit; campaign was proposed in one line with no tool
+      calls. Notes alone got investigate 0/5 and campaign 0/5. Replay of 66 real tasks with
+      edits: 28/28 multi-area held, 0 missed; 2/38 one-area held (1 real false positive).
+      USD 4.14 measured across 32 headless runs.
+- [ ] Hold shell writes too (`sed -i`, heredocs into the repo); only Edit and Write are held.
+- [ ] A `routing` userConfig row in `/config` (`options` needs Claude Code ≥ 2.1.271).
+- [ ] Verify that a subagent's hook input carries the parent's `session_id`; probe the Agent
+      hand-off hold live.
+- [ ] Probe plan → approve → implement with the hold on and Agent available, `--runs 3` per
+      route; re-run both kits' eval suites and check whether `claude plugin eval` runs hooks.
 
 ## Marketplace
 
